@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
@@ -15,20 +15,28 @@ const Login: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
   const { login, isAuthenticated, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Handle redirection when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      const from = (location.state as any)?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location]);
 
+  // Clear error only once when component mounts
   useEffect(() => {
-    // Clear any errors when component mounts
     clearError();
-  }, [clearError]);
+  }, []); // Empty dependency array means this runs once on mount
 
   const onSubmit = async (data: LoginFormData) => {
-    await login(data.email, data.password);
+    try {
+      await login(data.email, data.password);
+    } catch (err) {
+      // Error is handled by the auth context
+      console.error('Login error:', err);
+    }
   };
 
   return (
@@ -42,7 +50,7 @@ const Login: React.FC = () => {
             Sign in to your account
           </h2>
         </div>
-        
+
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-400 px-4 py-3 rounded relative">
             <span className="block sm:inline">{error}</span>
@@ -54,7 +62,7 @@ const Login: React.FC = () => {
             label="Email Address"
             type="email"
             autoComplete="email"
-            {...register('email', { 
+            {...register('email', {
               required: 'Email is required',
               pattern: {
                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -68,7 +76,7 @@ const Login: React.FC = () => {
             label="Password"
             type="password"
             autoComplete="current-password"
-            {...register('password', { 
+            {...register('password', {
               required: 'Password is required',
               minLength: {
                 value: 6,
