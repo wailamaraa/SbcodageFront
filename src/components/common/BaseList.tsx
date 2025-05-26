@@ -1,0 +1,143 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Filter } from 'lucide-react';
+import { BaseApiService } from '../../services/api/base';
+import Table, { TableProps } from '../ui/Table';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import Input from '../ui/Input';
+import Select from '../ui/Select';
+import { useCrud } from '../../hooks/useCrud';
+
+interface BaseListProps<T> {
+  title: string;
+  basePath: string;
+  service: BaseApiService<T>;
+  columns: TableProps<T>['columns'];
+  sortOptions?: Array<{ value: string; label: string }>;
+  searchPlaceholder?: string;
+  createButtonLabel?: string;
+  emptyMessage?: string;
+}
+
+const PAGE_SIZE = 10;
+
+export function BaseList<T extends { _id: string }>({
+  title,
+  basePath,
+  service,
+  columns,
+  sortOptions = [
+    { value: '-createdAt', label: 'Newest First' },
+    { value: 'createdAt', label: 'Oldest First' }
+  ],
+  searchPlaceholder = 'Search...',
+  createButtonLabel = 'New Item',
+  emptyMessage = 'No items found'
+}: BaseListProps<T>) {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('-createdAt');
+  const navigate = useNavigate();
+
+  const {
+    items,
+    total,
+    isLoading,
+    loadItems,
+    deleteItem
+  } = useCrud<T>({
+    service,
+    basePath
+  });
+
+  useEffect(() => {
+    loadItems({
+      page,
+      limit: PAGE_SIZE,
+      sort,
+      ...(search && { search })
+    });
+  }, [loadItems, page, search, sort]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
+          <Button
+            variant="primary"
+            onClick={() => navigate(`${basePath}/new`)}
+            icon={<Plus size={20} />}
+          >
+            {createButtonLabel}
+          </Button>
+        </div>
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <Input
+                placeholder={searchPlaceholder}
+                value={search}
+                onChange={e => { setPage(1); setSearch(e.target.value); }}
+                className="pl-10"
+                icon={<Search size={20} className="text-gray-400" />}
+              />
+            </div>
+            <Select
+              value={sort}
+              onChange={e => { setPage(1); setSort(e.target.value); }}
+              options={sortOptions}
+              icon={<Filter size={20} className="text-gray-400" />}
+            />
+          </div>
+        </div>
+
+        <Table
+          columns={columns}
+          data={items}
+          keyExtractor={(item) => item._id}
+          isLoading={isLoading}
+          onRowClick={(item) => navigate(`${basePath}/${item._id}`)}
+          onDeleteClick={deleteItem}
+          className="w-full"
+          emptyMessage={emptyMessage}
+        />
+
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {items.length} of {total} items
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Page {page} of {totalPages || 1}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page + 1)}
+                disabled={page === totalPages || totalPages === 0}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+} 
