@@ -13,39 +13,39 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   onDateChange,
 }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
-          <Calendar size={20} />
-          <span className="font-medium">Date Range</span>
+    <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
+        <Calendar className="h-5 w-5" />
+        <span className="font-medium">Date Range</span>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <div className="relative">
+          <input
+            type="date"
+            className="block w-full px-4 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors duration-200"
+            value={startDate ? startDate.toISOString().split('T')[0] : ''}
+            onChange={(e) => {
+              const date = e.target.value ? new Date(e.target.value) : null;
+              onDateChange(date, endDate);
+            }}
+            placeholder="Start Date"
+          />
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative">
-            <input
-              type="date"
-              className="block w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              value={startDate ? startDate.toISOString().split('T')[0] : ''}
-              onChange={(e) => {
-                const date = e.target.value ? new Date(e.target.value) : null;
-                onDateChange(date, endDate);
-              }}
-              placeholder="Start Date"
-            />
-          </div>
-          
-          <div className="relative">
-            <input
-              type="date"
-              className="block w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              value={endDate ? endDate.toISOString().split('T')[0] : ''}
-              onChange={(e) => {
-                const date = e.target.value ? new Date(e.target.value) : null;
-                onDateChange(startDate, date);
-              }}
-              placeholder="End Date"
-            />
-          </div>
+
+        <span className="text-gray-500 dark:text-gray-400">to</span>
+
+        <div className="relative">
+          <input
+            type="date"
+            className="block w-full px-4 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors duration-200"
+            value={endDate ? endDate.toISOString().split('T')[0] : ''}
+            onChange={(e) => {
+              const date = e.target.value ? new Date(e.target.value) : null;
+              onDateChange(startDate, date);
+            }}
+            placeholder="End Date"
+          />
         </div>
       </div>
     </div>
