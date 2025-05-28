@@ -50,7 +50,7 @@ const Register: React.FC = () => {
             </Link>
           </p>
         </div>
-        
+
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-400 px-4 py-3 rounded relative">
             <span className="block sm:inline">{error}</span>
@@ -61,7 +61,7 @@ const Register: React.FC = () => {
           <Input
             label="Full Name"
             autoComplete="name"
-            {...register('name', { 
+            {...register('name', {
               required: 'Name is required',
               minLength: {
                 value: 2,
@@ -75,7 +75,7 @@ const Register: React.FC = () => {
             label="Email Address"
             type="email"
             autoComplete="email"
-            {...register('email', { 
+            {...register('email', {
               required: 'Email is required',
               pattern: {
                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -88,10 +88,10 @@ const Register: React.FC = () => {
           <Input
             label="Password"
             type="password"
-            {...register('password', { 
+            {...register('password', {
               required: 'Password is required',
               minLength: {
-                value: 6, 
+                value: 6,
                 message: 'Password must be at least 6 characters'
               }
             })}
@@ -101,7 +101,7 @@ const Register: React.FC = () => {
           <Input
             label="Confirm Password"
             type="password"
-            {...register('confirmPassword', { 
+            {...register('confirmPassword', {
               required: 'Please confirm your password',
               validate: (val: string) => {
                 if (watch('password') !== val) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Package, AlertCircle, Truck, Tag, ShoppingCart, Car, Wrench, TrendingUp, Calendar, ArrowUp, ArrowDown } from 'lucide-react';
+import { Package, AlertCircle, Truck, Tag, ShoppingCart, Car, Wrench, TrendingUp, Calendar, ArrowUp, ArrowDown, DollarSign } from 'lucide-react';
 import { DashboardStats } from '../../types';
 import Card from '../../components/ui/Card';
 import DashboardFilters from '../../components/ui/DashboardFilters';
@@ -17,6 +17,7 @@ import {
   PointElement,
   LineElement,
 } from 'chart.js';
+import { formatCurrency } from '../../utils/formatters';
 
 ChartJS.register(
   CategoryScale,
@@ -150,7 +151,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="mt-4">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${stats.inventory.value != null ? stats.inventory.value.toLocaleString() : 'N/A'}
+                {formatCurrency(stats.inventory.value || 0)}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Inventory Value</p>
             </div>
@@ -207,7 +208,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="mt-4">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${stats.repairs.revenue != null ? stats.repairs.revenue.toLocaleString() : 'N/A'}
+                {formatCurrency(stats.repairs.revenue || 0)}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Monthly Revenue</p>
             </div>

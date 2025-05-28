@@ -40,8 +40,12 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ isEditing }) => {
           suppliersApi.getAll()
         ]);
 
-        if (categoriesRes.success) setCategories(categoriesRes.data);
-        if (suppliersRes.success) setSuppliers(suppliersRes.data);
+        if (categoriesRes.success && categoriesRes.data) {
+          setCategories(categoriesRes.data);
+        }
+        if (suppliersRes.success && suppliersRes.data) {
+          setSuppliers(suppliersRes.data);
+        }
       } catch (error) {
         console.error('Error fetching form data:', error);
       } finally {
@@ -55,7 +59,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ isEditing }) => {
   // Custom input change handler to handle select fields
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     // For category and fournisseur selects, store only the ID
     if (name === 'category' || name === 'fournisseur') {
       handleChange(name, value || null);
@@ -66,7 +70,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ isEditing }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Create a new object with the form data
     const formData = {
       ...data,
@@ -74,12 +78,12 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ isEditing }) => {
       category: data.category || null,
       fournisseur: data.fournisseur || null
     };
-    
+
     // Update the data before submission
     Object.entries(formData).forEach(([key, value]) => {
       handleChange(key as keyof Item, value);
     });
-    
+
     await handleFormSubmit(e);
   };
 
@@ -142,6 +146,39 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ isEditing }) => {
               required
               placeholder="Enter item quantity"
               min={0}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Input
+              label="Low Stock Threshold"
+              name="threshold"
+              type="number"
+              value={data.threshold || ''}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter low stock threshold"
+              min={0}
+            />
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              When quantity falls below this number, the item will be marked as low stock
+            </p>
+          </div>
+
+          <div>
+            <Select
+              label="Status"
+              name="status"
+              value={data.status || 'available'}
+              onChange={handleInputChange}
+              required
+              options={[
+                { value: 'available', label: 'Available' },
+                { value: 'unavailable', label: 'Unavailable' },
+                { value: 'discontinued', label: 'Discontinued' }
+              ]}
             />
           </div>
         </div>

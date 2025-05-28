@@ -12,6 +12,7 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import TextArea from '../../components/ui/TextArea';
 import Button from '../../components/ui/Button';
+import { formatCurrency } from '../../utils/formatters';
 
 const DEFAULT_FORM_DATA: Partial<Reparation> = {
   car: '',
@@ -112,12 +113,12 @@ const ReparationForm: React.FC = () => {
 
   const formatItemOption = (item: Item) => ({
     value: item._id,
-    label: `${item.name} - $${item.price.toFixed(2)} (${item.quantity} in stock)`
+    label: `${item.name} - ${formatCurrency(item.price)} (${item.quantity} in stock)`
   });
 
   const formatServiceOption = (service: Service) => ({
     value: service._id,
-    label: `${service.name} - $${service.price.toFixed(2)} (${service.duration}h)`
+    label: `${service.name} - ${formatCurrency(service.price)} (${service.duration}h)`
   });
 
   // Helper function to find the selected item/service name
@@ -168,14 +169,14 @@ const ReparationForm: React.FC = () => {
             <h3 className="text-lg font-medium">Basic Information</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Technician"
-            name="technician"
+            <Input
+              label="Technician"
+              name="technician"
               value={data.technician}
-            onChange={handleInputChange}
-            required
-            placeholder="Enter technician name"
-          />
+              onChange={handleInputChange}
+              required
+              placeholder="Enter technician name"
+            />
 
             <Input
               label="Labor Cost"

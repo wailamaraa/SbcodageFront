@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Tag, Clock, FileText } from 'lucide-react';
+import { Plus, Search, Filter, Tag, Clock, FileText, Edit, Trash2 } from 'lucide-react';
 import { categoriesApi } from '../../services/api';
 import { Category } from '../../types';
 import Table from '../../components/ui/Table';
@@ -39,8 +39,8 @@ const CategoriesList: React.FC = () => {
   }, [loadCategories, page, search, sort]);
 
   const columns = [
-    { 
-      header: 'Name', 
+    {
+      header: 'Name',
       accessor: (category: Category) => (
         <div className="flex items-center gap-2">
           <Tag size={16} className="text-gray-400" />
@@ -49,8 +49,8 @@ const CategoriesList: React.FC = () => {
       ),
       className: 'min-w-[200px]'
     },
-    { 
-      header: 'Description', 
+    {
+      header: 'Description',
       accessor: (category: Category) => (
         <div className="flex items-center gap-2">
           <FileText size={16} className="text-gray-400" />
@@ -69,6 +69,37 @@ const CategoriesList: React.FC = () => {
       ),
       className: 'min-w-[150px]'
     },
+    {
+      header: 'Actions',
+      accessor: (category: Category) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/categories/edit/${category._id}`);
+            }}
+            icon={<Edit size={16} />}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteCategory(category._id);
+            }}
+            icon={<Trash2 size={16} />}
+            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+          >
+            Delete
+          </Button>
+        </div>
+      ),
+      className: 'w-[200px]'
+    }
   ];
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -77,14 +108,14 @@ const CategoriesList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div className="flex items-center gap-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Categories</h1>
-        <Button
-          variant="primary"
-          onClick={() => navigate('/categories/new')}
-          icon={<Plus size={20} />}
-        >
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Categories</h1>
+          <Button
+            variant="primary"
+            onClick={() => navigate('/categories/new')}
+            icon={<Plus size={20} />}
+          >
             New Category
-        </Button>
+          </Button>
         </div>
       </div>
 
@@ -120,7 +151,6 @@ const CategoriesList: React.FC = () => {
           keyExtractor={(category) => category._id}
           isLoading={isLoading}
           onRowClick={(category) => navigate(`/categories/${category._id}`)}
-          onDeleteClick={deleteCategory}
           className="w-full"
           emptyMessage="No categories found"
         />

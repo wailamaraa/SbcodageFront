@@ -5,6 +5,7 @@ import { inventoryApi } from '../../services/api/inventory';
 import { BaseDetails } from '../../components/common/BaseDetails';
 import { useDetails } from '../../hooks/useDetails';
 import Badge from '../../components/ui/Badge';
+import { formatCurrency } from '../../utils/formatters';
 
 const InventoryDetails: React.FC = () => {
   const { id = '' } = useParams();
@@ -42,7 +43,7 @@ const InventoryDetails: React.FC = () => {
             <DollarSign size={16} className="text-gray-400" />
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Price</h3>
           </div>
-          <p className="text-gray-900 dark:text-white">${item?.price?.toFixed(2)}</p>
+          <p className="text-gray-900 dark:text-white">{formatCurrency(item?.price || 0)}</p>
         </div>
 
         <div>

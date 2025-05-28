@@ -4,28 +4,31 @@ import { inventoryApi } from '../../services/api/inventory';
 import { Item } from '../../types';
 import { BaseList } from '../../components/common/BaseList';
 import Badge from '../../components/ui/Badge';
-
-const LOW_STOCK_THRESHOLD = 10;
-const WARNING_STOCK_THRESHOLD = 20;
+import { formatCurrency } from '../../utils/formatters';
 
 const InventoryList: React.FC = () => {
   const columns = [
-    { 
-      header: 'Name', 
+    {
+      header: 'Name',
       accessor: (item: Item) => (
-        <div className="flex items-center gap-2">
-          <Package size={16} className="text-gray-400" />
-          <div className="font-medium">{item.name}</div>
+        <div className="flex items-start gap-2">
+          <Package size={16} className="text-gray-400 mt-1" />
+          <div className="flex flex-col">
+            <div className="font-medium">{item.name}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+              {item.description || 'No description'}
+            </div>
+          </div>
         </div>
       ),
-      className: 'min-w-[200px]'
+      className: 'min-w-[300px]'
     },
-    { 
-      header: 'Price', 
+    {
+      header: 'Price',
       accessor: (item: Item) => (
         <div className="flex items-center gap-2">
           <DollarSign size={16} className="text-gray-400" />
-          <span>${item.price.toFixed(2)}</span>
+          <span>{formatCurrency(item.price)}</span>
         </div>
       ),
       className: 'min-w-[120px]'
@@ -34,16 +37,23 @@ const InventoryList: React.FC = () => {
       header: 'Quantity',
       accessor: (item: Item) => {
         let variant: 'success' | 'warning' | 'danger' = 'success';
-        if (item.quantity <= LOW_STOCK_THRESHOLD) {
+        const threshold = item.threshold || 10; // Default to 10 if no threshold is set
+
+        if (item.quantity <= threshold) {
           variant = 'danger';
-        } else if (item.quantity <= WARNING_STOCK_THRESHOLD) {
+        } else if (item.quantity <= threshold * 2) {
           variant = 'warning';
         }
 
         return (
           <div className="flex items-center gap-2">
             <Hash size={16} className="text-gray-400" />
-            <Badge variant={variant}>{item.quantity}</Badge>
+            <div className="flex flex-col">
+              <Badge variant={variant}>{item.quantity}</Badge>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Threshold: {threshold}
+              </span>
+            </div>
           </div>
         );
       },

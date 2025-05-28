@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { BaseApiService } from '../services/api/base';
@@ -20,12 +20,38 @@ export function useForm<T>({ service, basePath, id, initialData = {} }: UseFormO
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Load data when in edit mode
+  useEffect(() => {
+    const loadData = async () => {
+      if (id) {
+        setIsLoading(true);
+        try {
+          const response = await service.getById(id);
+          if (response.success && response.data) {
+            setData(response.data);
+          } else {
+            toast.error('Failed to load item data');
+            navigate(basePath);
+          }
+        } catch (error) {
+          console.error('Error loading item data:', error);
+          toast.error('Failed to load item data');
+          navigate(basePath);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadData();
+  }, [id, service, navigate, basePath]);
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = id 
+      const response = id
         ? await service.update(id, data)
         : await service.create(data);
 
@@ -54,7 +80,7 @@ export function useForm<T>({ service, basePath, id, initialData = {} }: UseFormO
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     setData(prev => {
       // Handle nested object paths (e.g., "owner.name")
       const parts = name.split('.');

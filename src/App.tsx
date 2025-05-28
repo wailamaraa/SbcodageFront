@@ -68,7 +68,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
-            
+
             {/* Protected routes inside layout */}
             <Route path="/" element={
               <ProtectedRoute>
@@ -77,7 +77,7 @@ function App() {
                 </Layout>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Layout>
@@ -295,7 +295,7 @@ function App() {
                 </Layout>
               </ProtectedRoute>
             } />
-                
+
             {/* 404 route */}
             <Route path="*" element={<NotFound />} />
           </Routes>

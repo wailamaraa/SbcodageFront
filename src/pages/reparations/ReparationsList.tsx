@@ -1,14 +1,15 @@
 import React from 'react';
-import {Car, User, DollarSign, Clock } from 'lucide-react';
+import { Car, User, DollarSign, Clock } from 'lucide-react';
 import { reparationsApi } from '../../services/api/reparations';
 import { Reparation } from '../../types';
 import { BaseList } from '../../components/common/BaseList';
 import Badge from '../../components/ui/Badge';
+import { formatCurrency } from '../../utils/formatters';
 
 const ReparationsList: React.FC = () => {
   const columns = [
-    { 
-      header: 'Vehicle', 
+    {
+      header: 'Vehicle',
       accessor: (reparation: Reparation) => {
         if (!reparation.car) {
           return (
@@ -19,8 +20,8 @@ const ReparationsList: React.FC = () => {
           );
         }
 
-        const car = typeof reparation.car === 'string' 
-          ? { make: 'Unknown', model: 'Unknown', year: 'N/A', owner: { name: 'Unknown' } } 
+        const car = typeof reparation.car === 'string'
+          ? { make: 'Unknown', model: 'Unknown', year: 'N/A', owner: { name: 'Unknown' } }
           : reparation.car;
 
         return (
@@ -37,8 +38,8 @@ const ReparationsList: React.FC = () => {
       },
       className: 'min-w-[250px]'
     },
-    { 
-      header: 'Technician', 
+    {
+      header: 'Technician',
       accessor: (reparation: Reparation) => {
         if (!reparation.technician) {
           return (
@@ -84,7 +85,7 @@ const ReparationsList: React.FC = () => {
       accessor: (reparation: Reparation) => (
         <div className="flex items-center gap-2">
           <DollarSign size={16} className="text-gray-400" />
-          <span>${(reparation.totalCost || 0).toFixed(2)}</span>
+          <span>{formatCurrency(reparation.totalCost || 0)}</span>
         </div>
       ),
       className: 'min-w-[120px]'

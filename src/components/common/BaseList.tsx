@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
 import { BaseApiService } from '../../services/api/base';
 import Table, { TableProps } from '../ui/Table';
 import Button from '../ui/Button';
@@ -62,6 +62,42 @@ export function BaseList<T extends { _id: string }>({
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
+  // Add actions column to the table
+  const tableColumns = [
+    ...columns,
+    {
+      header: 'Actions',
+      accessor: (item: T) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`${basePath}/edit/${item._id}`);
+            }}
+            icon={<Edit size={16} />}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteItem(item._id);
+            }}
+            icon={<Trash2 size={16} />}
+            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+          >
+            Delete
+          </Button>
+        </div>
+      ),
+      className: 'w-[200px]'
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
@@ -99,12 +135,11 @@ export function BaseList<T extends { _id: string }>({
         </div>
 
         <Table
-          columns={columns}
+          columns={tableColumns}
           data={items}
           keyExtractor={(item) => item._id}
           isLoading={isLoading}
           onRowClick={(item) => navigate(`${basePath}/${item._id}`)}
-          onDeleteClick={deleteItem}
           className="w-full"
           emptyMessage={emptyMessage}
         />

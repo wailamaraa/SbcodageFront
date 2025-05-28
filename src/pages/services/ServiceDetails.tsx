@@ -5,6 +5,7 @@ import { servicesApi } from '../../services/api/services';
 import { BaseDetails } from '../../components/common/BaseDetails';
 import { useDetails } from '../../hooks/useDetails';
 import Badge from '../../components/ui/Badge';
+import { formatCurrency } from '../../utils/formatters';
 
 const ServiceDetails: React.FC = () => {
   const { id = '' } = useParams();
@@ -47,7 +48,7 @@ const ServiceDetails: React.FC = () => {
             <DollarSign size={16} className="text-gray-400" />
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Price</h3>
           </div>
-          <p className="text-gray-900 dark:text-white">${service?.price?.toFixed(2)}</p>
+          <p className="text-gray-900 dark:text-white">{formatCurrency(service?.price || 0)}</p>
         </div>
 
         <div>

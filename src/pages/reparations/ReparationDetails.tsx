@@ -6,6 +6,7 @@ import { BaseDetails } from '../../components/common/BaseDetails';
 import { useDetails } from '../../hooks/useDetails';
 import Badge, { BadgeVariant } from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
+import { formatCurrency } from '../../utils/formatters';
 
 const ReparationDetails: React.FC = () => {
   const { id = '' } = useParams();
@@ -66,8 +67,8 @@ const ReparationDetails: React.FC = () => {
     return null;
   }
 
-  const car = typeof reparation?.car === 'string' 
-    ? { make: '', model: '', year: '', licensePlate: '', owner: { name: '', email: '', phone: '' } } 
+  const car = typeof reparation?.car === 'string'
+    ? { make: '', model: '', year: '', licensePlate: '', owner: { name: '', email: '', phone: '' } }
     : reparation?.car;
 
   const statusMap: Record<string, BadgeVariant> = {
@@ -150,8 +151,8 @@ const ReparationDetails: React.FC = () => {
             </div>
             <div className="space-y-2">
               {reparation.items.map((itemEntry, index) => {
-                const item = typeof itemEntry.item === 'string' 
-                  ? { name: itemEntry.item } 
+                const item = typeof itemEntry.item === 'string'
+                  ? { name: itemEntry.item }
                   : itemEntry.item;
                 return (
                   <div key={index} className="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded">
@@ -159,13 +160,13 @@ const ReparationDetails: React.FC = () => {
                       <p className="font-medium">{item.name}</p>
                       <p className="text-sm text-gray-500">Quantity: {itemEntry.quantity}</p>
                     </div>
-                    <p className="font-medium">${itemEntry.price?.toFixed(2) || '0.00'}</p>
+                    <p className="font-medium">{formatCurrency(itemEntry.price || 0)}</p>
                   </div>
                 );
               })}
               <div className="flex justify-between items-center pt-2 border-t">
                 <p className="font-medium">Total Parts Cost</p>
-                <p className="font-medium">${reparation.partsCost?.toFixed(2) || '0.00'}</p>
+                <p className="font-medium">{formatCurrency(reparation.partsCost || 0)}</p>
               </div>
             </div>
           </div>
@@ -190,13 +191,13 @@ const ReparationDetails: React.FC = () => {
                         <p className="text-sm text-gray-500">{serviceEntry.notes}</p>
                       )}
                     </div>
-                    <p className="font-medium">${serviceEntry.price?.toFixed(2) || '0.00'}</p>
+                    <p className="font-medium">{formatCurrency(serviceEntry.price || 0)}</p>
                   </div>
                 );
               })}
               <div className="flex justify-between items-center pt-2 border-t">
                 <p className="font-medium">Total Services Cost</p>
-                <p className="font-medium">${reparation.servicesCost?.toFixed(2) || '0.00'}</p>
+                <p className="font-medium">{formatCurrency(reparation.servicesCost || 0)}</p>
               </div>
             </div>
           </div>
@@ -210,19 +211,19 @@ const ReparationDetails: React.FC = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <p>Parts Cost</p>
-              <p className="font-medium">${reparation?.partsCost?.toFixed(2) || '0.00'}</p>
+              <p className="font-medium">{formatCurrency(reparation?.partsCost || 0)}</p>
             </div>
             <div className="flex justify-between items-center">
               <p>Services Cost</p>
-              <p className="font-medium">${reparation?.servicesCost?.toFixed(2) || '0.00'}</p>
+              <p className="font-medium">{formatCurrency(reparation?.servicesCost || 0)}</p>
             </div>
             <div className="flex justify-between items-center">
               <p>Labor Cost</p>
-              <p className="font-medium">${reparation?.laborCost?.toFixed(2) || '0.00'}</p>
+              <p className="font-medium">{formatCurrency(reparation?.laborCost || 0)}</p>
             </div>
             <div className="flex justify-between items-center pt-2 border-t">
               <p className="font-medium">Total Cost</p>
-              <p className="font-medium text-lg">${reparation?.totalCost?.toFixed(2) || '0.00'}</p>
+              <p className="font-medium text-lg">{formatCurrency(reparation?.totalCost || 0)}</p>
             </div>
           </div>
         </div>

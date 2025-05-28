@@ -42,7 +42,7 @@ export function BaseDetails<T extends { _id: string }>({
           {extraActions}
           <Button
             variant="outline"
-            onClick={() => navigate(`${basePath}/${data._id}/edit`)}
+            onClick={() => navigate(`${basePath}/edit/${data._id}`)}
             icon={<Edit size={20} />}
             disabled={isLoading}
           >

@@ -4,11 +4,12 @@ import { servicesApi } from '../../services/api/services';
 import { Service } from '../../types';
 import { BaseList } from '../../components/common/BaseList';
 import Badge from '../../components/ui/Badge';
+import { formatCurrency } from '../../utils/formatters';
 
 const ServicesList: React.FC = () => {
   const columns = [
-    { 
-      header: 'Name', 
+    {
+      header: 'Name',
       accessor: (service: Service) => (
         <div className="flex items-center gap-2">
           <Wrench size={16} className="text-gray-400" />
@@ -17,17 +18,17 @@ const ServicesList: React.FC = () => {
       ),
       className: 'min-w-[200px]'
     },
-    { 
-      header: 'Price', 
+    {
+      header: 'Price',
       accessor: (service: Service) => (
         <div className="flex items-center gap-2">
           <DollarSign size={16} className="text-gray-400" />
-          <span>${service.price.toFixed(2)}</span>
+          <span>{formatCurrency(service.price)}</span>
         </div>
       ),
       className: 'min-w-[120px]'
     },
-    { 
+    {
       header: 'Duration',
       accessor: (service: Service) => (
         <div className="flex items-center gap-2">
