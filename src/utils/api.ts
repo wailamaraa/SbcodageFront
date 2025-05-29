@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://sbcodageback.onrender.com/api';
+const API_URL = 'http://localhost:5000/api';
 
 // Create an axios instance
 const api = axios.create({
@@ -27,13 +27,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const { response } = error;
-    
+
     // Handle authentication errors
     if (response && response.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
-    
+
     return Promise.reject(error);
   }
 );

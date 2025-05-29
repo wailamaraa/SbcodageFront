@@ -12,7 +12,7 @@ class ServicesApiService extends BaseApiService<Service> {
   }
 
   async delete(id: string) {
-    const response = await api.post(`${this.endpoint}/${id}/remove`);
+    const response = await api.delete(`${this.endpoint}/${id}`);
     return response.data;
   }
 }
