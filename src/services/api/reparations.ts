@@ -22,7 +22,7 @@ class ReparationsApiService extends BaseApiService<Reparation> {
   async removeItem(id: string, itemId: string) {
     const reparation = await this.getById(id);
     if (reparation.success) {
-      const updatedItems = reparation.data.items.filter((item: ReparationItem) => 
+      const updatedItems = reparation.data.items.filter((item: ReparationItem) =>
         typeof item.item === 'string' ? item.item !== itemId : item.item._id !== itemId
       );
       return this.update(id, { items: updatedItems });

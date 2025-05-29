@@ -1,5 +1,6 @@
 import { BaseApiService } from './base';
 import { Service } from '../../types';
+import api from '../../utils/api';
 
 class ServicesApiService extends BaseApiService<Service> {
   constructor() {
@@ -8,6 +9,11 @@ class ServicesApiService extends BaseApiService<Service> {
 
   async updateStatus(id: string, status: 'active' | 'inactive') {
     return this.update(id, { status });
+  }
+
+  async delete(id: string) {
+    const response = await api.post(`${this.endpoint}/${id}/remove`);
+    return response.data;
   }
 }
 

@@ -1,334 +1,19 @@
-# Stock Management API Documentation
-
-## Table of Contents
-1. [Base URL and Environment Configuration](#base-url-and-environment-configuration)
-2. [Authentication and Authorization](#authentication-and-authorization)
-3. [Error Handling](#error-handling)
-4. [API Endpoints](#api-endpoints)
-5. [Data Models](#data-models)
-6. [Frontend Implementation Guidelines](#frontend-implementation-guidelines)
-7. [Workflow Examples](#workflow-examples)
-
-## Base URL and Environment Configuration
-
-### Development
-```
-http://localhost:5000/api
-```
-
-### Production
-```
-https://your-api-domain.com/api
-```
-
-### Environment Variables
-Frontend applications should configure the following environment variables:
-```
-REACT_APP_API_URL=http://localhost:5000/api
-REACT_APP_API_TIMEOUT=30000
-REACT_APP_VERSION=1.0.0
-```
-
-## Authentication and Authorization
-
-### Token Management
-- Tokens are stored in localStorage with key `auth_token`
-- Token expiration: 24 hours
-- Implement auto-refresh token mechanism 15 minutes before expiration
-
-### API Headers
-All authenticated requests must include:
-```javascript
-{
-  'Authorization': 'Bearer YOUR_TOKEN',
-  'Content-Type': 'application/json'
-}
-```
-
-### Authentication State Management
-Recommended implementation:
-```javascript
-// Example using React Context
-const AuthContext = createContext({
-  isAuthenticated: false,
-  user: null,
-  token: null,
-  login: () => {},
-  logout: () => {}
-});
-
-// Usage in API calls
-const authToken = localStorage.getItem('auth_token');
-const headers = {
-  'Authorization': `Bearer ${authToken}`,
-  'Content-Type': 'application/json'
-};
-```
-
-## Error Handling
-
-### Standard Error Format
-```typescript
-interface ApiError {
-  success: false;
-  error: string;
-  details?: any;
-  statusCode?: number;
-}
-```
-
-### Error Handling Implementation
-```javascript
-// Axios interceptor example
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response.status === 401) {
-      // Handle unauthorized access
-      store.dispatch(logout());
-      return Promise.reject(error);
-    }
-    
-    if (error.response.status === 403) {
-      // Handle forbidden access
-      return Promise.reject(error);
-    }
-    
-    return Promise.reject(error);
-  }
-);
-```
-
-### Common HTTP Status Codes and Handling
-```javascript
-const handleApiError = (error) => {
-  switch (error.response?.status) {
-    case 400: // Bad Request
-      return 'Invalid input data';
-    case 401: // Unauthorized
-      return 'Please login to continue';
-    case 403: // Forbidden
-      return 'You don\'t have permission to perform this action';
-    case 404: // Not Found
-      return 'Resource not found';
-    case 422: // Validation Error
-      return error.response.data.error;
-    case 500: // Server Error
-      return 'An unexpected error occurred';
-    default:
-      return 'Something went wrong';
-  }
-};
-```
-
-## Frontend Implementation Guidelines
-
-### Data Fetching
-1. **Loading States**
-```typescript
-interface FetchState<T> {
-  data: T | null;
-  loading: boolean;
-  error: string | null;
-}
-
-// Usage Example
-const [state, setState] = useState<FetchState<Item[]>>({
-  data: null,
-  loading: false,
-  error: null
-});
-```
-
-2. **Pagination Implementation**
-```typescript
-interface PaginationParams {
-  page: number;
-  limit: number;
-  sort?: string;
-  search?: string;
-}
-
-interface PaginatedResponse<T> {
-  data: T[];
-  count: number;
-  totalPages: number;
-  currentPage: number;
-}
-```
-
-3. **Caching Strategy**
-```javascript
-// Example using React Query
-const { data, isLoading, error } = useQuery(
-  ['items', queryParams],
-  () => fetchItems(queryParams),
-  {
-    staleTime: 5 * 60 * 1000, // Data considered fresh for 5 minutes
-    cacheTime: 30 * 60 * 1000, // Cache kept for 30 minutes
-    retry: 3
-  }
-);
-```
-
-### Real-time Updates
-For inventory and repair status changes:
-
-```javascript
-// WebSocket connection (if implemented on backend)
-const socket = io(REACT_APP_WS_URL, {
-  auth: {
-    token: authToken
-  }
-});
-
-// Listen for updates
-socket.on('inventory-update', (data) => {
-  // Update local state
-});
-
-socket.on('repair-status-change', (data) => {
-  // Update local state
-});
-```
-
-### Form Handling
-1. **Validation Schema Example**
-```javascript
-const serviceSchema = yup.object().shape({
-  name: yup.string().required('Service name is required'),
-  description: yup.string(),
-  price: yup.number().required('Price is required').min(0),
-  duration: yup.number().min(0),
-  category: yup.string().oneOf(['maintenance', 'repair', 'diagnostic', 'bodywork', 'other']),
-  status: yup.string().oneOf(['active', 'inactive'])
-});
-```
-
-2. **File Upload Handling**
-```javascript
-const handleFileUpload = async (file) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  
-  try {
-    const response = await axios.post('/api/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data.url;
-  } catch (error) {
-    throw new Error('File upload failed');
-  }
-};
-```
-
-### State Management Recommendations
-1. **Global State Structure**
-```typescript
-interface AppState {
-  auth: {
-    user: User | null;
-    token: string | null;
-    isAuthenticated: boolean;
-  };
-  inventory: {
-    items: Item[];
-    loading: boolean;
-    error: string | null;
-  };
-  repairs: {
-    activeRepairs: Repair[];
-    completedRepairs: Repair[];
-    loading: boolean;
-    error: string | null;
-  };
-  ui: {
-    theme: 'light' | 'dark';
-    sidebarOpen: boolean;
-    notifications: Notification[];
-  };
-}
-```
-
-2. **Action Types**
-```typescript
-enum ActionTypes {
-  // Auth
-  LOGIN_SUCCESS = 'auth/loginSuccess',
-  LOGOUT = 'auth/logout',
-  
-  // Inventory
-  FETCH_ITEMS = 'inventory/fetchItems',
-  UPDATE_ITEM = 'inventory/updateItem',
-  
-  // Repairs
-  CREATE_REPAIR = 'repairs/createRepair',
-  UPDATE_REPAIR_STATUS = 'repairs/updateStatus',
-  
-  // UI
-  TOGGLE_THEME = 'ui/toggleTheme',
-  ADD_NOTIFICATION = 'ui/addNotification'
-}
-```
-
-## API Response Formats
-
-### Success Response Format
-```typescript
-interface SuccessResponse<T> {
-  success: true;
-  data: T;
-  message?: string;
-}
-```
-
-### List Response Format
-```typescript
-interface ListResponse<T> {
-  success: true;
-  data: T[];
-  count: number;
-  totalPages: number;
-  currentPage: number;
-}
-```
-
-### Nested Data Handling
-```typescript
-interface RepairResponse {
-  _id: string;
-  car: {
-    _id: string;
-    make: string;
-    model: string;
-    year: number;
-    owner: {
-      name: string;
-      email: string;
-    };
-  };
-  items: Array<{
-    _id: string;
-    item: {
-      _id: string;
-      name: string;
-      price: number;
-    };
-    quantity: number;
-    price: number;
-  }>;
-  // ... other fields
-}
-```
+# API Documentation
 
 ## Authentication
 
-### Register a new user
-**Endpoint:** `POST /auth/register`
+All endpoints except `/api/auth/register` and `/api/auth/login` require authentication. Include the JWT token in the Authorization header:
+```
+Authorization: Bearer <your_token>
+```
 
-**Request Body:**
+## Authentication Endpoints
+
+### Register User
+- **URL**: `/api/auth/register`
+- **Method**: `POST`
+- **Auth required**: No
+- **Request Body**:
 ```json
 {
   "name": "John Doe",
@@ -336,178 +21,96 @@ interface RepairResponse {
   "password": "password123"
 }
 ```
-
-**Response:**
+- **Success Response**: `201 Created`
 ```json
 {
   "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "token": "jwt_token_here",
+  "user": {
+    "_id": "user_id",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "user"
+  }
 }
 ```
 
-### Login
-**Endpoint:** `POST /auth/login`
-
-**Request Body:**
+### Login User
+- **URL**: `/api/auth/login`
+- **Method**: `POST`
+- **Auth required**: No
+- **Request Body**:
 ```json
 {
   "email": "john@example.com",
   "password": "password123"
 }
 ```
-
-**Response:**
+- **Success Response**: `200 OK`
 ```json
 {
   "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "token": "jwt_token_here",
+  "user": {
+    "_id": "user_id",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "user"
+  }
 }
 ```
+
+## User Management
 
 ### Get Current User
-**Endpoint:** `GET /auth/me`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
+- **URL**: `/api/auth/me`
+- **Method**: `GET`
+- **Auth required**: Yes
+- **Success Response**: `200 OK`
 ```json
 {
   "success": true,
   "data": {
-    "_id": "60d5ec9af1234c002a123456",
+    "_id": "user_id",
     "name": "John Doe",
     "email": "john@example.com",
-    "role": "user"
-  }
-}
-```
-
-## Users (Admin Only)
-
-### Get All Users
-**Endpoint:** `GET /users`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "count": 2,
-  "data": [
-    {
-      "_id": "60d5ec9af1234c002a123456",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "role": "user"
-    },
-    {
-      "_id": "60d5ec9af1234c002a123457",
-      "name": "Admin User",
-      "email": "admin@example.com",
-      "role": "admin"
-    }
-  ]
-}
-```
-
-### Get Single User
-**Endpoint:** `GET /users/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123456",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "user"
-  }
-}
-```
-
-### Create User
-**Endpoint:** `POST /users`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
-```json
-{
-  "name": "New User",
-  "email": "newuser@example.com",
-  "password": "password123",
-  "role": "user"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123458",
-    "name": "New User",
-    "email": "newuser@example.com",
     "role": "user"
   }
 }
 ```
 
 ### Update User
-**Endpoint:** `PUT /users/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
+- **URL**: `/api/users/:id`
+- **Method**: `PUT`
+- **Auth required**: Yes
+- **Permissions required**: Admin
+- **Request Body**:
 ```json
 {
-  "name": "Updated Name",
-  "email": "updated@example.com",
+  "name": "John Updated",
+  "email": "john.updated@example.com",
   "role": "admin"
 }
 ```
-
-**Response:**
+- **Success Response**: `200 OK`
 ```json
 {
   "success": true,
   "data": {
-    "_id": "60d5ec9af1234c002a123456",
-    "name": "Updated Name",
-    "email": "updated@example.com",
+    "_id": "user_id",
+    "name": "John Updated",
+    "email": "john.updated@example.com",
     "role": "admin"
   }
 }
 ```
 
 ### Delete User
-**Endpoint:** `DELETE /users/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
+- **URL**: `/api/users/:id`
+- **Method**: `DELETE`
+- **Auth required**: Yes
+- **Permissions required**: Admin
+- **Success Response**: `200 OK`
 ```json
 {
   "success": true,
@@ -515,481 +118,35 @@ Authorization: Bearer YOUR_TOKEN
 }
 ```
 
-## Items (Inventory Management)
-
-### Get All Items
-**Endpoint:** `GET /items`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Query Parameters for Filtering, Pagination, and Sorting
-
-Most list endpoints now support the following query parameters:
-- `page` (number): Page number (default: 1)
-- `limit` (number): Items per page (default: 10)
-- `sort` (string): Field to sort by, prefix with '-' for descending (e.g. `sort=-createdAt`)
-- Filtering fields (see each endpoint for details)
-
-**Example:** `/api/items?status=low_stock&search=brake&page=2&limit=5&sort=-createdAt`
-
-**Response:**
-```json
-{
-  "success": true,
-  "count": 2,
-  "data": [
-    {
-      "_id": "60d5ec9af1234c002a123459",
-      "name": "Item 1",
-      "price": 29.99,
-      "quantity": 100,
-      "category": "60d5ec9af1234c002a123460",
-      "fournisseur": "60d5ec9af1234c002a123461"
-    },
-    {
-      "_id": "60d5ec9af1234c002a123462",
-      "name": "Item 2",
-      "price": 49.99,
-      "quantity": 50,
-      "category": "60d5ec9af1234c002a123460",
-      "fournisseur": "60d5ec9af1234c002a123461"
-    }
-  ]
-}
-```
-
-### Get Single Item
-**Endpoint:** `GET /items/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123459",
-    "name": "Item 1",
-    "price": 29.99,
-    "quantity": 100,
-    "category": {
-      "_id": "60d5ec9af1234c002a123460",
-      "name": "Electronics"
-    },
-    "fournisseur": {
-      "_id": "60d5ec9af1234c002a123461",
-      "name": "Supplier Inc."
-    }
-  }
-}
-```
-
-### Create Item (Admin Only)
-**Endpoint:** `POST /items`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
-```json
-{
-  "name": "New Item",
-  "price": 39.99,
-  "quantity": 75,
-  "category": "60d5ec9af1234c002a123460",
-  "fournisseur": "60d5ec9af1234c002a123461"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123463",
-    "name": "New Item",
-    "price": 39.99,
-    "quantity": 75,
-    "category": "60d5ec9af1234c002a123460",
-    "fournisseur": "60d5ec9af1234c002a123461"
-  }
-}
-```
-
-### Update Item (Admin Only)
-**Endpoint:** `PUT /items/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
-```json
-{
-  "name": "Updated Item",
-  "price": 45.99,
-  "quantity": 60
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123459",
-    "name": "Updated Item",
-    "price": 45.99,
-    "quantity": 60,
-    "category": "60d5ec9af1234c002a123460",
-    "fournisseur": "60d5ec9af1234c002a123461"
-  }
-}
-```
-
-### Delete Item (Admin Only)
-**Endpoint:** `DELETE /items/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {}
-}
-```
-
-### Update Item Quantity
-**Endpoint:** `PUT /items/:id/quantity`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
-```json
-{
-  "quantity": 10,
-  "operation": "add"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123459",
-    "name": "Item 1",
-    "price": 29.99,
-    "quantity": 110,
-    "category": "60d5ec9af1234c002a123460",
-    "fournisseur": "60d5ec9af1234c002a123461"
-  }
-}
-```
-
-## Suppliers (Fournisseurs)
-
-### Get All Suppliers
-**Endpoint:** `GET /fournisseurs`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "count": 2,
-  "data": [
-    {
-      "_id": "60d5ec9af1234c002a123461",
-      "name": "Supplier Inc.",
-      "email": "contact@supplier.com",
-      "phone": "123-456-7890"
-    },
-    {
-      "_id": "60d5ec9af1234c002a123464",
-      "name": "Another Supplier",
-      "email": "info@anothersupplier.com",
-      "phone": "123-456-7891"
-    }
-  ]
-}
-```
-
-### Get Single Supplier
-**Endpoint:** `GET /fournisseurs/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123461",
-    "name": "Supplier Inc.",
-    "email": "contact@supplier.com",
-    "phone": "123-456-7890"
-  }
-}
-```
-
-### Create Supplier (Admin Only)
-**Endpoint:** `POST /fournisseurs`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
-```json
-{
-  "name": "New Supplier",
-  "email": "contact@newsupplier.com",
-  "phone": "123-456-7892"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123465",
-    "name": "New Supplier",
-    "email": "contact@newsupplier.com",
-    "phone": "123-456-7892"
-  }
-}
-```
-
-### Update Supplier (Admin Only)
-**Endpoint:** `PUT /fournisseurs/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
-```json
-{
-  "name": "Updated Supplier",
-  "email": "updated@supplier.com"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123461",
-    "name": "Updated Supplier",
-    "email": "updated@supplier.com",
-    "phone": "123-456-7890"
-  }
-}
-```
-
-### Delete Supplier (Admin Only)
-**Endpoint:** `DELETE /fournisseurs/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {}
-}
-```
-
-## Categories
-
-### Get All Categories
-**Endpoint:** `GET /categories`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "count": 2,
-  "data": [
-    {
-      "_id": "60d5ec9af1234c002a123460",
-      "name": "Electronics"
-    },
-    {
-      "_id": "60d5ec9af1234c002a123466",
-      "name": "Office Supplies"
-    }
-  ]
-}
-```
-
-### Get Single Category
-**Endpoint:** `GET /categories/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123460",
-    "name": "Electronics"
-  }
-}
-```
-
-### Create Category (Admin Only)
-**Endpoint:** `POST /categories`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
-```json
-{
-  "name": "New Category"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123467",
-    "name": "New Category"
-  }
-}
-```
-
-### Update Category (Admin Only)
-**Endpoint:** `PUT /categories/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
-```json
-{
-  "name": "Updated Category"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "60d5ec9af1234c002a123460",
-    "name": "Updated Category"
-  }
-}
-```
-
-### Delete Category (Admin Only)
-**Endpoint:** `DELETE /categories/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {}
-}
-```
-
-## Cars (Vehicles)
+## Cars Management
 
 ### Get All Cars
-**Endpoint:** `GET /cars`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Query Parameters for Filtering, Pagination, and Sorting
-
-Most list endpoints now support the following query parameters:
-- `page` (number): Page number (default: 1)
-- `limit` (number): Items per page (default: 10)
-- `sort` (string): Field to sort by, prefix with '-' for descending (e.g. `sort=-createdAt`)
-- Filtering fields (see each endpoint for details)
-
-**Example:** `/api/cars?search=toyota&year=2020&page=1&limit=10&sort=-createdAt`
-
-**Response:**
+- **URL**: `/api/cars`
+- **Method**: `GET`
+- **Auth required**: Yes
+- **Query Parameters**:
+  - `page`: number (default: 1)
+  - `limit`: number (default: 10)
+  - `search`: string (searches in make, model, and owner name)
+  - `sort`: string (e.g., '-createdAt', 'make')
+- **Success Response**: `200 OK`
 ```json
 {
   "success": true,
-  "count": 2,
+  "count": 1,
+  "total": 1,
+  "page": 1,
+  "pages": 1,
   "data": [
     {
-      "_id": "60d5ec9af1234c002a123468",
+      "_id": "car_id",
       "make": "Toyota",
       "model": "Camry",
       "year": 2020,
       "owner": {
         "name": "John Doe",
-        "email": "john@example.com"
-      }
-    },
-    {
-      "_id": "60d5ec9af1234c002a123469",
-      "make": "Honda",
-      "model": "Accord",
-      "year": 2019,
-      "owner": {
-        "name": "Jane Smith",
-        "email": "jane@example.com"
+        "email": "john@example.com",
+        "phone": "1234567890"
       }
     }
   ]
@@ -997,111 +154,91 @@ Most list endpoints now support the following query parameters:
 ```
 
 ### Get Single Car
-**Endpoint:** `GET /cars/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
+- **URL**: `/api/cars/:id`
+- **Method**: `GET`
+- **Auth required**: Yes
+- **Success Response**: `200 OK`
 ```json
 {
   "success": true,
   "data": {
-    "_id": "60d5ec9af1234c002a123468",
+    "_id": "car_id",
     "make": "Toyota",
     "model": "Camry",
     "year": 2020,
     "owner": {
       "name": "John Doe",
-      "email": "john@example.com"
+      "email": "john@example.com",
+      "phone": "1234567890"
     }
   }
 }
 ```
 
 ### Create Car
-**Endpoint:** `POST /cars`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
+- **URL**: `/api/cars`
+- **Method**: `POST`
+- **Auth required**: Yes
+- **Request Body**:
 ```json
 {
-  "make": "Nissan",
-  "model": "Altima",
-  "year": 2021,
+  "make": "Toyota",
+  "model": "Camry",
+  "year": 2020,
   "owner": {
-    "name": "Bob Johnson",
-    "email": "bob@example.com"
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "1234567890"
   }
 }
 ```
-
-**Response:**
+- **Success Response**: `201 Created`
 ```json
 {
   "success": true,
   "data": {
-    "_id": "60d5ec9af1234c002a123470",
-    "make": "Nissan",
-    "model": "Altima",
-    "year": 2021,
+    "_id": "car_id",
+    "make": "Toyota",
+    "model": "Camry",
+    "year": 2020,
     "owner": {
-      "name": "Bob Johnson",
-      "email": "bob@example.com"
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "1234567890"
     }
   }
 }
 ```
 
 ### Update Car
-**Endpoint:** `PUT /cars/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Request Body:**
-```json
-{
-  "make": "Nissan",
-  "model": "Maxima",
-  "year": 2022
-}
-```
-
-**Response:**
+- **URL**: `/api/cars/:id`
+- **Method**: `PUT`
+- **Auth required**: Yes
+- **Request Body**: Same as Create Car
+- **Success Response**: `200 OK`
 ```json
 {
   "success": true,
   "data": {
-    "_id": "60d5ec9af1234c002a123470",
-    "make": "Nissan",
-    "model": "Maxima",
-    "year": 2022,
+    "_id": "car_id",
+    "make": "Toyota",
+    "model": "Camry",
+    "year": 2020,
     "owner": {
-      "name": "Bob Johnson",
-      "email": "bob@example.com"
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "1234567890"
     }
   }
 }
 ```
 
-### Delete Car (Admin Only)
-**Endpoint:** `DELETE /cars/:id`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Response:**
+### Delete Car
+- **URL**: `/api/cars/:id`
+- **Method**: `DELETE`
+- **Auth required**: Yes
+- **Permissions required**: Admin
+- **Success Response**: `200 OK`
 ```json
 {
   "success": true,
@@ -1109,186 +246,108 @@ Authorization: Bearer YOUR_TOKEN
 }
 ```
 
-## Dashboard
-
-### Get Dashboard Statistics
-**Endpoint:** `GET /dashboard`
-
-**Headers:**
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-**Query Parameters for Filtering, Pagination, and Sorting
-
-Most list endpoints now support the following query parameters:
-- `dateDebut`: Start date for completed repairs and revenue (ISO format)
-- `dateFin`: End date for completed repairs and revenue (ISO format)
-
-**Example:** `/api/dashboard?dateDebut=2024-06-01&dateFin=2024-06-30`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "itemCount": 8,
-    "userCount": 5,
-    "categoryCount": 3,
-    "supplierCount": 4,
-    "carCount": 7,
-    "lowStockItems": 2,
-    "recentItems": [
-      {
-        "_id": "60d5ec9af1234c002a123459",
-        "name": "Item 1",
-        "price": 29.99,
-        "quantity": 100
-      },
-      {
-        "_id": "60d5ec9af1234c002a123462",
-        "name": "Item 2",
-        "price": 49.99,
-        "quantity": 50
-      }
-    ]
-  }
-}
-```
-
-## Services
-
-### Create a Service
-- **URL**: `/api/services`
-- **Method**: `POST`
-- **Auth required**: Yes
-- **Permissions required**: Authenticated user
-- **Request Body**:
-```json
-{
-  "name": "Oil Change",
-  "description": "Complete oil change service with filter replacement",
-  "price": 50,
-  "duration": 1,
-  "category": "maintenance",
-  "status": "active",
-  "notes": "Optional notes about the service"
-}
-```
-- **Success Response**: `201 Created`
-```json
-{
-  "_id": "60d21b4667d0d8992e610c85",
-  "name": "Oil Change",
-  "description": "Complete oil change service with filter replacement",
-  "price": 50,
-  "duration": 1,
-  "category": "maintenance",
-  "status": "active",
-  "notes": "Optional notes about the service",
-  "createdAt": "2023-06-22T10:00:00.000Z",
-  "updatedAt": "2023-06-22T10:00:00.000Z"
-}
-```
+## Services Management
 
 ### Get All Services
 - **URL**: `/api/services`
 - **Method**: `GET`
 - **Auth required**: Yes
-- **Permissions required**: Authenticated user
-- **Query Parameters:**
-  - `category`: Filter by category
-  - `status`: Filter by status
-  - `search`: Search by name
-  - `page`, `limit`, `sort`
-- **Example:** `/api/services?status=active&search=oil&page=1&limit=10&sort=name`
+- **Query Parameters**:
+  - `page`: number (default: 1)
+  - `limit`: number (default: 10)
+  - `category`: string
+  - `status`: string
+  - `search`: string (searches in name)
+  - `sort`: string (e.g., '-createdAt', 'name')
 - **Success Response**: `200 OK`
 ```json
-[
-  {
-    "_id": "60d21b4667d0d8992e610c85",
-    "name": "Oil Change",
-    "description": "Complete oil change service with filter replacement",
-    "price": 50,
-    "duration": 1,
-    "category": "maintenance",
-    "status": "active",
-    "notes": "Optional notes about the service",
-    "createdAt": "2023-06-22T10:00:00.000Z",
-    "updatedAt": "2023-06-22T10:00:00.000Z"
-  },
-  {
-    "_id": "60d21b4667d0d8992e610c86",
-    "name": "Brake Inspection",
-    "description": "Complete brake system inspection",
-    "price": 30,
-    "duration": 0.5,
-    "category": "diagnostic",
-    "status": "active",
-    "notes": "",
-    "createdAt": "2023-06-22T10:30:00.000Z",
-    "updatedAt": "2023-06-22T10:30:00.000Z"
-  }
-]
+{
+  "success": true,
+  "count": 1,
+  "total": 1,
+  "page": 1,
+  "pages": 1,
+  "data": [
+    {
+      "_id": "service_id",
+      "name": "Oil Change",
+      "description": "Complete oil change service",
+      "price": 50,
+      "duration": 1,
+      "category": "maintenance",
+      "status": "active"
+    }
+  ]
+}
 ```
 
-### Get a Single Service
+### Get Single Service
 - **URL**: `/api/services/:id`
 - **Method**: `GET`
 - **Auth required**: Yes
-- **Permissions required**: Authenticated user
-- **URL Parameters**: `id=[string]` where `id` is the ID of the service
 - **Success Response**: `200 OK`
 ```json
 {
-  "_id": "60d21b4667d0d8992e610c85",
+  "_id": "service_id",
   "name": "Oil Change",
-  "description": "Complete oil change service with filter replacement",
+  "description": "Complete oil change service",
   "price": 50,
   "duration": 1,
   "category": "maintenance",
-  "status": "active",
-  "notes": "Optional notes about the service",
-  "createdAt": "2023-06-22T10:00:00.000Z",
-  "updatedAt": "2023-06-22T10:00:00.000Z"
+  "status": "active"
 }
 ```
 
-### Update a Service
+### Create Service
+- **URL**: `/api/services`
+- **Method**: `POST`
+- **Auth required**: Yes
+- **Request Body**:
+```json
+{
+  "name": "Oil Change",
+  "description": "Complete oil change service",
+  "price": 50,
+  "duration": 1,
+  "category": "maintenance",
+  "status": "active"
+}
+```
+- **Success Response**: `201 Created`
+```json
+{
+  "_id": "service_id",
+  "name": "Oil Change",
+  "description": "Complete oil change service",
+  "price": 50,
+  "duration": 1,
+  "category": "maintenance",
+  "status": "active"
+}
+```
+
+### Update Service
 - **URL**: `/api/services/:id`
 - **Method**: `PUT`
 - **Auth required**: Yes
-- **Permissions required**: Authenticated user
-- **URL Parameters**: `id=[string]` where `id` is the ID of the service
-- **Request Body**: Fields to update
-```json
-{
-  "price": 55,
-  "status": "inactive"
-}
-```
+- **Request Body**: Same as Create Service
 - **Success Response**: `200 OK`
 ```json
 {
-  "_id": "60d21b4667d0d8992e610c85",
+  "_id": "service_id",
   "name": "Oil Change",
-  "description": "Complete oil change service with filter replacement",
+  "description": "Complete oil change service",
   "price": 55,
   "duration": 1,
   "category": "maintenance",
-  "status": "inactive",
-  "notes": "Optional notes about the service",
-  "createdAt": "2023-06-22T10:00:00.000Z",
-  "updatedAt": "2023-06-23T11:30:00.000Z"
+  "status": "active"
 }
 ```
 
-### Delete a Service
+### Delete Service
 - **URL**: `/api/services/:id`
 - **Method**: `DELETE`
 - **Auth required**: Yes
-- **Permissions required**: Authenticated user
-- **URL Parameters**: `id=[string]` where `id` is the ID of the service
 - **Success Response**: `200 OK`
 ```json
 {
@@ -1296,552 +355,299 @@ Most list endpoints now support the following query parameters:
 }
 ```
 
-## Reparations
+## Reparations Management
 
-### Create a Reparation
+### Get All Reparations
 - **URL**: `/api/reparations`
-- **Method**: `POST`
+- **Method**: `GET`
 - **Auth required**: Yes
-- **Permissions required**: Authenticated user
-- **Request Body**:
+- **Query Parameters**:
+  - `page`: number (default: 1)
+  - `limit`: number (default: 10)
+  - `car`: string (car ID)
+  - `status`: string
+  - `technician`: string
+  - `startDate`: ISO date string
+  - `endDate`: ISO date string
+  - `search`: string (searches in description)
+  - `sort`: string (e.g., '-createdAt', 'status')
+- **Success Response**: `200 OK`
 ```json
 {
-  "car": "60d21b4667d0d8992e610c87",
-  "description": "Regular maintenance and oil change",
+  "success": true,
+  "count": 1,
+  "total": 1,
+  "page": 1,
+  "pages": 1,
+  "data": [
+    {
+      "_id": "reparation_id",
+      "car": {
+        "_id": "car_id",
+        "make": "Toyota",
+        "model": "Camry",
+        "year": 2020
+      },
+      "description": "Regular maintenance",
+      "startDate": "2024-03-20T10:00:00.000Z",
+      "status": "pending",
+      "technician": "John Smith",
+      "items": [
+        {
+          "item": {
+            "_id": "item_id",
+            "name": "Oil Filter",
+            "price": 25
+          },
+          "quantity": 1,
+          "price": 25
+        }
+      ],
+      "services": [
+        {
+          "service": {
+            "_id": "service_id",
+            "name": "Oil Change",
+            "price": 50
+          },
+          "price": 50
+        }
+      ],
+      "totalCost": 75,
+      "partsCost": 25,
+      "laborCost": 0,
+      "servicesCost": 50
+    }
+  ]
+}
+```
+
+### Get Single Reparation
+- **URL**: `/api/reparations/:id`
+- **Method**: `GET`
+- **Auth required**: Yes
+- **Success Response**: `200 OK`
+```json
+{
+  "_id": "reparation_id",
+  "car": {
+    "_id": "car_id",
+    "make": "Toyota",
+    "model": "Camry",
+    "year": 2020
+  },
+  "description": "Regular maintenance",
+  "startDate": "2024-03-20T10:00:00.000Z",
+  "status": "pending",
   "technician": "John Smith",
-  "laborCost": 75,
   "items": [
     {
-      "item": "60d21b4667d0d8992e610c88",
-      "quantity": 2
+      "item": {
+        "_id": "item_id",
+        "name": "Oil Filter",
+        "price": 25
+      },
+      "quantity": 1,
+      "price": 25
     }
   ],
   "services": [
     {
-      "service": "60d21b4667d0d8992e610c85",
+      "service": {
+        "_id": "service_id",
+        "name": "Oil Change",
+        "price": 50
+      },
+      "price": 50
+    }
+  ],
+  "totalCost": 75,
+  "partsCost": 25,
+  "laborCost": 0,
+  "servicesCost": 50
+}
+```
+
+### Create Reparation
+- **URL**: `/api/reparations`
+- **Method**: `POST`
+- **Auth required**: Yes
+- **Request Body**:
+```json
+{
+  "car": "car_id",
+  "description": "Regular maintenance",
+  "technician": "John Smith",
+  "laborCost": 0,
+  "items": [
+    {
+      "item": "item_id",
+      "quantity": 1
+    }
+  ],
+  "services": [
+    {
+      "service": "service_id",
       "notes": "Used synthetic oil"
     }
   ],
   "notes": "Customer requested synthetic oil"
 }
 ```
-
-## Frontend Implementation Examples
-
-### Authentication Flow
-```typescript
-// authService.ts
-export const authService = {
-  async login(email: string, password: string) {
-    try {
-      const response = await axios.post('/api/auth/login', { email, password });
-      const { token, user } = response.data;
-      localStorage.setItem('auth_token', token);
-      return user;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
+- **Success Response**: `201 Created`
+```json
+{
+  "_id": "reparation_id",
+  "car": {
+    "_id": "car_id",
+    "make": "Toyota",
+    "model": "Camry",
+    "year": 2020
   },
-
-  async register(userData: RegisterData) {
-    try {
-      const response = await axios.post('/api/auth/register', userData);
-      const { token, user } = response.data;
-      localStorage.setItem('auth_token', token);
-      return user;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  },
-
-  logout() {
-    localStorage.removeItem('auth_token');
-  }
-};
-
-// AuthProvider.tsx
-export const AuthProvider: React.FC = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-  
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      // Verify token and get user data
-      authService.getCurrentUser()
-        .then(user => dispatch({ type: 'SET_USER', payload: user }))
-        .catch(() => authService.logout());
-    }
-  }, []);
-
-  return (
-    <AuthContext.Provider value={{ ...state, dispatch }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-```
-
-### API Service Implementation
-```typescript
-// apiService.ts
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL;
-
-const apiClient = axios.create({
-  baseURL: API_URL,
-  timeout: 30000,
-});
-
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-export const itemsService = {
-  async getItems(params: PaginationParams) {
-    try {
-      const response = await apiClient.get('/items', { params });
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  },
-
-  async createItem(itemData: CreateItemData) {
-    try {
-      const response = await apiClient.post('/items', itemData);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
-};
-
-export const repairService = {
-  async createRepair(repairData: CreateRepairData) {
-    try {
-      const response = await apiClient.post('/reparations', repairData);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
-};
-```
-
-### Custom Hooks
-```typescript
-// useItems.ts
-export const useItems = (params: PaginationParams) => {
-  const queryKey = ['items', params];
-  
-  return useQuery(queryKey, () => itemsService.getItems(params), {
-    keepPreviousData: true,
-    staleTime: 5 * 60 * 1000
-  });
-};
-
-// useRepair.ts
-export const useRepair = (repairId: string) => {
-  const queryKey = ['repair', repairId];
-  
-  return useQuery(queryKey, () => repairService.getRepair(repairId), {
-    enabled: !!repairId
-  });
-};
-```
-
-### Form Components
-```typescript
-// RepairForm.tsx
-interface RepairFormProps {
-  onSubmit: (data: CreateRepairData) => Promise<void>;
-  initialData?: Partial<CreateRepairData>;
-}
-
-export const RepairForm: React.FC<RepairFormProps> = ({ onSubmit, initialData }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<CreateRepairData>({
-    defaultValues: initialData,
-    resolver: yupResolver(repairSchema)
-  });
-
-  const { data: items } = useItems({ page: 1, limit: 100 });
-  const { data: services } = useServices({ page: 1, limit: 100 });
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <TextField
-        {...register('description')}
-        label="Description"
-        error={!!errors.description}
-        helperText={errors.description?.message}
-      />
-      
-      <Select
-        {...register('items')}
-        label="Select Items"
-        multiple
-        error={!!errors.items}
-      >
-        {items?.data.map(item => (
-          <MenuItem key={item._id} value={item._id}>
-            {item.name} - ${item.price}
-          </MenuItem>
-        ))}
-      </Select>
-      
-      {/* Add more form fields */}
-    </form>
-  );
-};
-```
-
-### Data Grid Implementation
-```typescript
-// ItemsTable.tsx
-export const ItemsTable: React.FC = () => {
-  const [params, setParams] = useState<PaginationParams>({
-    page: 1,
-    limit: 10,
-    sort: '-createdAt'
-  });
-
-  const { data, isLoading } = useItems(params);
-
-  const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', flex: 1 },
-    { field: 'price', headerName: 'Price', type: 'number' },
-    { field: 'quantity', headerName: 'Stock', type: 'number' },
+  "description": "Regular maintenance",
+  "startDate": "2024-03-20T10:00:00.000Z",
+  "status": "pending",
+  "technician": "John Smith",
+  "items": [
     {
-      field: 'status',
-      headerName: 'Status',
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={getStatusColor(params.value)}
-        />
-      )
-    },
+      "item": {
+        "_id": "item_id",
+        "name": "Oil Filter",
+        "price": 25
+      },
+      "quantity": 1,
+      "price": 25
+    }
+  ],
+  "services": [
     {
-      field: 'actions',
-      headerName: 'Actions',
-      renderCell: (params) => (
-        <ButtonGroup>
-          <IconButton onClick={() => handleEdit(params.row)}>
-            <EditIcon />
-          </IconButton>
-          <IconButton onClick={() => handleDelete(params.row._id)}>
-            <DeleteIcon />
-          </IconButton>
-        </ButtonGroup>
-      )
+      "service": {
+        "_id": "service_id",
+        "name": "Oil Change",
+        "price": 50
+      },
+      "price": 50,
+      "notes": "Used synthetic oil"
     }
-  ];
-
-  return (
-    <DataGrid
-      rows={data?.data || []}
-      columns={columns}
-      loading={isLoading}
-      pagination
-      paginationMode="server"
-      rowCount={data?.count || 0}
-      page={params.page - 1}
-      pageSize={params.limit}
-      onPageChange={(newPage) => setParams(prev => ({ ...prev, page: newPage + 1 }))}
-      onPageSizeChange={(newLimit) => setParams(prev => ({ ...prev, limit: newLimit }))}
-    />
-  );
-};
-```
-
-### Error Boundary
-```typescript
-// ErrorBoundary.tsx
-export class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  state = { hasError: false, error: null };
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <ErrorDisplay
-          error={this.state.error}
-          onReset={() => this.setState({ hasError: false, error: null })}
-        />
-      );
-    }
-
-    return this.props.children;
-  }
+  ],
+  "totalCost": 75,
+  "partsCost": 25,
+  "laborCost": 0,
+  "servicesCost": 50,
+  "notes": "Customer requested synthetic oil"
 }
 ```
 
-### Notification System
-```typescript
-// notificationSlice.ts
-interface Notification {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info' | 'warning';
+### Update Reparation
+- **URL**: `/api/reparations/:id`
+- **Method**: `PUT`
+- **Auth required**: Yes
+- **Request Body**:
+```json
+{
+  "status": "completed",
+  "endDate": "2024-03-20T15:00:00.000Z"
 }
+```
+- **Success Response**: `200 OK`
+```json
+{
+  "_id": "reparation_id",
+  "status": "completed",
+  "endDate": "2024-03-20T15:00:00.000Z",
+  // ... other reparation fields
+}
+```
 
-const notificationSlice = createSlice({
-  name: 'notifications',
-  initialState: [] as Notification[],
-  reducers: {
-    addNotification: (state, action: PayloadAction<Omit<Notification, 'id'>>) => {
-      state.push({
-        id: nanoid(),
-        ...action.payload
-      });
+### Delete Reparation
+- **URL**: `/api/reparations/:id`
+- **Method**: `DELETE`
+- **Auth required**: Yes
+- **Success Response**: `200 OK`
+```json
+{
+  "message": "Reparation removed"
+}
+```
+
+## Dashboard
+
+### Get Dashboard Statistics
+- **URL**: `/api/dashboard`
+- **Method**: `GET`
+- **Auth required**: Yes
+- **Query Parameters**:
+  - `dateDebut`: ISO date string
+  - `dateFin`: ISO date string
+- **Success Response**: `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "counts": {
+      "items": 100,
+      "fournisseurs": 10,
+      "categories": 5,
+      "cars": 50,
+      "reparations": 200
     },
-    removeNotification: (state, action: PayloadAction<string>) => {
-      return state.filter(notification => notification.id !== action.payload);
-    }
-  }
-});
-
-// NotificationProvider.tsx
-export const NotificationProvider: React.FC = ({ children }) => {
-  const notifications = useSelector(selectNotifications);
-  const dispatch = useDispatch();
-
-  return (
-    <>
-      {children}
-      <Stack spacing={2} sx={{ position: 'fixed', bottom: 24, right: 24 }}>
-        {notifications.map(notification => (
-          <Alert
-            key={notification.id}
-            severity={notification.type}
-            onClose={() => dispatch(removeNotification(notification.id))}
-          >
-            {notification.message}
-          </Alert>
-        ))}
-      </Stack>
-    </>
-  );
-};
-```
-
-### WebSocket Integration
-```typescript
-// websocketService.ts
-export class WebSocketService {
-  private socket: Socket | null = null;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-
-  connect() {
-    if (this.socket?.connected) return;
-
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
-
-    this.socket = io(process.env.REACT_APP_WS_URL!, {
-      auth: { token },
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: this.maxReconnectAttempts
-    });
-
-    this.setupEventListeners();
-  }
-
-  private setupEventListeners() {
-    if (!this.socket) return;
-
-    this.socket.on('connect', () => {
-      console.log('WebSocket connected');
-      this.reconnectAttempts = 0;
-    });
-
-    this.socket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason);
-      if (reason === 'io server disconnect') {
-        // Server disconnected us, try to reconnect
-        this.connect();
+    "inventory": {
+      "value": 50000,
+      "lowStock": 5,
+      "outOfStock": 2
+    },
+    "repairs": {
+      "active": 10,
+      "completed": 190,
+      "revenue": 25000,
+      "dateDebut": "2024-03-01T00:00:00.000Z",
+      "dateFin": "2024-03-20T23:59:59.999Z"
+    },
+    "topItems": [
+      {
+        "name": "Oil Filter",
+        "quantity": 50
       }
-    });
-
-    this.socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
-      this.reconnectAttempts++;
-      
-      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        this.socket?.disconnect();
-      }
-    });
-
-    // Business events
-    this.socket.on('inventory-update', (data) => {
-      store.dispatch(updateInventoryItem(data));
-    });
-
-    this.socket.on('repair-status-change', (data) => {
-      store.dispatch(updateRepairStatus(data));
-    });
-  }
-
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
+    ]
   }
 }
-
-export const wsService = new WebSocketService();
 ```
 
-### Route Protection
-```typescript
-// ProtectedRoute.tsx
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requiredRole?: UserRole;
-}
+## Error Responses
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
-  requiredRole
-}) => {
-  const { isAuthenticated, user } = useAuth();
-  const location = useLocation();
+All endpoints may return the following error responses:
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+### 400 Bad Request
+```json
+{
+  "success": false,
+  "error": "Validation error",
+  "details": {
+    "field": ["Error message"]
   }
-
-  if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// App.tsx
-export const App: React.FC = () => {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      
-      <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/repairs" element={<RepairsPage />} />
-        
-        <Route element={<ProtectedRoute requiredRole="admin" />}>
-          <Route path="/admin/*" element={<AdminRoutes />} />
-        </Route>
-      </Route>
-    </Routes>
-  );
-};
-```
-
-## Best Practices
-
-### State Management
-1. Use React Query for server state
-2. Use Redux/Context for global UI state
-3. Use local state for component-specific state
-4. Implement optimistic updates for better UX
-
-### Performance
-1. Implement virtualization for large lists
-2. Use debounce for search inputs
-3. Implement infinite scrolling for long lists
-4. Cache API responses appropriately
-
-### Security
-1. Sanitize all user inputs
-2. Implement CSRF protection
-3. Use HTTPS for all API calls
-4. Never store sensitive data in localStorage
-
-### Error Handling
-1. Implement global error boundary
-2. Use toast notifications for API errors
-3. Log errors to monitoring service
-4. Provide user-friendly error messages
-
-### Testing
-1. Write unit tests for utilities and hooks
-2. Write integration tests for forms
-3. Write E2E tests for critical flows
-4. Mock API calls in tests
-
-## Common Patterns
-
-### Loading States
-```typescript
-const LoadingState = {
-  IDLE: 'idle',
-  LOADING: 'loading',
-  SUCCESS: 'success',
-  ERROR: 'error'
-} as const;
-
-type LoadingState = typeof LoadingState[keyof typeof LoadingState];
-
-interface AsyncState<T> {
-  status: LoadingState;
-  data: T | null;
-  error: string | null;
 }
 ```
 
-### Form Validation
-```typescript
-const validationSchema = yup.object().shape({
-  email: yup
-    .string()
-    .email('Invalid email format')
-    .required('Email is required'),
-  password: yup
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .matches(/[0-9]/, 'Password must contain a number')
-    .matches(/[A-Z]/, 'Password must contain an uppercase letter')
-    .required('Password is required')
-});
-```
-
-### API Response Types
-```typescript
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-}
-
-interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  count: number;
-  totalPages: number;
-  currentPage: number;
-}
-
-interface ErrorResponse {
-  success: false;
-  error: string;
-  details?: Record<string, string[]>;
+### 401 Unauthorized
+```json
+{
+  "success": false,
+  "error": "Not authorized to access this route"
 }
 ```
+
+### 404 Not Found
+```json
+{
+  "success": false,
+  "error": "Resource not found"
+}
+```
+
+### 500 Server Error
+```json
+{
+  "success": false,
+  "error": "Server error message"
+}
+``` 

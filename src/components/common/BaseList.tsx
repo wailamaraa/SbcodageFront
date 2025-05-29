@@ -18,9 +18,11 @@ interface BaseListProps<T> {
   searchPlaceholder?: string;
   createButtonLabel?: string;
   emptyMessage?: string;
+  pageSizeOptions?: number[];
 }
 
-const PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 20, 50, 100];
 
 export function BaseList<T extends { _id: string }>({
   title,
@@ -33,9 +35,11 @@ export function BaseList<T extends { _id: string }>({
   ],
   searchPlaceholder = 'Search...',
   createButtonLabel = 'New Item',
-  emptyMessage = 'No items found'
+  emptyMessage = 'No items found',
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS
 }: BaseListProps<T>) {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('-createdAt');
   const navigate = useNavigate();
@@ -43,6 +47,8 @@ export function BaseList<T extends { _id: string }>({
   const {
     items,
     total,
+    currentPage,
+    totalPages,
     isLoading,
     loadItems,
     deleteItem
@@ -54,13 +60,11 @@ export function BaseList<T extends { _id: string }>({
   useEffect(() => {
     loadItems({
       page,
-      limit: PAGE_SIZE,
+      limit: pageSize,
       sort,
       ...(search && { search })
     });
-  }, [loadItems, page, search, sort]);
-
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  }, [loadItems, page, pageSize, search, sort]);
 
   // Add actions column to the table
   const tableColumns = [
@@ -115,7 +119,7 @@ export function BaseList<T extends { _id: string }>({
 
       <Card className="overflow-hidden">
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Input
                 placeholder={searchPlaceholder}
@@ -129,6 +133,12 @@ export function BaseList<T extends { _id: string }>({
               value={sort}
               onChange={e => { setPage(1); setSort(e.target.value); }}
               options={sortOptions}
+              icon={<Filter size={20} className="text-gray-400" />}
+            />
+            <Select
+              value={pageSize.toString()}
+              onChange={e => { setPage(1); setPageSize(Number(e.target.value)); }}
+              options={pageSizeOptions.map(size => ({ value: size.toString(), label: `${size} per page` }))}
               icon={<Filter size={20} className="text-gray-400" />}
             />
           </div>
@@ -154,18 +164,18 @@ export function BaseList<T extends { _id: string }>({
                 variant="outline"
                 size="sm"
                 onClick={() => setPage(page - 1)}
-                disabled={page === 1}
+                disabled={currentPage === 1}
               >
                 Previous
               </Button>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                Page {page} of {totalPages || 1}
+                Page {currentPage} of {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage(page + 1)}
-                disabled={page === totalPages || totalPages === 0}
+                disabled={currentPage === totalPages || totalPages === 0}
               >
                 Next
               </Button>

@@ -11,6 +11,8 @@ interface UseCrudOptions<T> {
 export function useCrud<T>({ service, basePath }: UseCrudOptions<T>) {
   const [items, setItems] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -21,6 +23,8 @@ export function useCrud<T>({ service, basePath }: UseCrudOptions<T>) {
       if (response?.success) {
         setItems(response.data);
         setTotal(response.count);
+        setCurrentPage(response.page || 1);
+        setTotalPages(response.pages || 1);
         return {
           data: response.data,
           count: response.count,
@@ -103,6 +107,8 @@ export function useCrud<T>({ service, basePath }: UseCrudOptions<T>) {
   return {
     items,
     total,
+    currentPage,
+    totalPages,
     isLoading,
     loadItems,
     getItem,

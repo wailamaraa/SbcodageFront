@@ -1,25 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Package, DollarSign, Tag, Hash, FileText, Clock } from 'lucide-react';
+import { Package, DollarSign, Tag, Hash, FileText, Clock, Plus } from 'lucide-react';
 import { inventoryApi } from '../../services/api/inventory';
 import { BaseDetails } from '../../components/common/BaseDetails';
 import { useDetails } from '../../hooks/useDetails';
 import Badge from '../../components/ui/Badge';
 import { formatCurrency } from '../../utils/formatters';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import { toast } from 'react-toastify';
 
 const InventoryDetails: React.FC = () => {
   const { id = '' } = useParams();
-  const { data: item, isLoading, handleDelete } = useDetails({
+  const { data: item, isLoading, handleDelete, refresh } = useDetails({
     service: inventoryApi,
     basePath: '/inventory',
     id
   });
 
+  const [quantity, setQuantity] = useState<number>(1);
+  const [isUpdating, setIsUpdating] = useState(false);
+
   if (!item && !isLoading) {
     return null;
   }
 
-  const quantity = item?.quantity || 0;
+  const handleAddQuantity = async () => {
+    if (quantity <= 0) {
+      toast.error('Quantity must be greater than 0');
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const response = await inventoryApi.updateQuantity(id, quantity, 'add');
+      if (response.success) {
+        toast.success('Quantity updated successfully');
+        refresh();
+      } else {
+        toast.error(response.message || 'Failed to update quantity');
+      }
+    } catch (error) {
+      toast.error('An error occurred while updating quantity');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
     <BaseDetails
@@ -51,9 +77,30 @@ const InventoryDetails: React.FC = () => {
             <Hash size={16} className="text-gray-400" />
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Quantity</h3>
           </div>
-          <Badge variant={quantity <= 10 ? 'danger' : quantity <= 20 ? 'warning' : 'success'}>
-            {quantity}
-          </Badge>
+          <div className="flex items-center gap-4">
+            <Badge variant={item?.quantity <= 10 ? 'danger' : item?.quantity <= 20 ? 'warning' : 'success'}>
+              {item?.quantity}
+            </Badge>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+                min={1}
+                className="w-20"
+              />
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleAddQuantity}
+                disabled={isUpdating}
+                className="flex items-center gap-1"
+              >
+                <Plus size={16} />
+                Add
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div>
