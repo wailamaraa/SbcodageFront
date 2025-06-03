@@ -17,6 +17,13 @@ const ReparationDetails: React.FC = () => {
     id
   });
 
+  const statusMap: Record<string, BadgeVariant> = {
+    pending: 'warning',
+    in_progress: 'info',
+    completed: 'success',
+    cancelled: 'danger'
+  };
+
   const handleStatusUpdate = async () => {
     if (!reparation || isUpdating) return;
 
@@ -45,7 +52,9 @@ const ReparationDetails: React.FC = () => {
   };
 
   const getStatusButton = () => {
-    if (!reparation || reparation.status === 'completed' || reparation.status === 'cancelled') {
+    if (!reparation) return null;
+
+    if (reparation.status === 'completed' || reparation.status === 'cancelled') {
       return null;
     }
 
@@ -71,20 +80,8 @@ const ReparationDetails: React.FC = () => {
     ? { make: '', model: '', year: '', licensePlate: '', owner: { name: '', email: '', phone: '' } }
     : reparation?.car;
 
-  const statusMap: Record<string, BadgeVariant> = {
-    pending: 'warning',
-    in_progress: 'info',
-    completed: 'success',
-    cancelled: 'danger'
-  };
-
-  const statusVariant = statusMap[reparation?.status || 'pending'];
-
-  const statusText = (reparation?.status || 'pending')
-    .replace('_', ' ')
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  // Get the reparation status from the data field
+  const reparationStatus = (reparation as any)?.data?.status || reparation?.status || 'pending';
 
   return (
     <BaseDetails
@@ -127,8 +124,8 @@ const ReparationDetails: React.FC = () => {
             <div className="space-y-2">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                <Badge variant={statusVariant} className="mt-1">
-                  {statusText}
+                <Badge variant={statusMap[reparationStatus]} className="mt-1">
+                  {reparationStatus}
                 </Badge>
               </div>
               <div>

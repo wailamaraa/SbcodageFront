@@ -18,33 +18,49 @@ export interface ApiResponse<T> {
   data?: T;
   message?: string;
   errors?: ApiError[];
+  status?: number;
 }
 
 export class BaseApiService<T> {
-  constructor(private endpoint: string) {}
+  constructor(private endpoint: string) { }
 
   async getAll(params: QueryParams = {}): Promise<ApiResponse<T[]>> {
     const response = await api.get(this.endpoint, { params });
-    return response.data;
+    return {
+      ...response.data,
+      status: response.status
+    };
   }
 
   async getById(id: string): Promise<ApiResponse<T>> {
     const response = await api.get(`${this.endpoint}/${id}`);
-    return response.data;
+    return {
+      ...response.data,
+      status: response.status
+    };
   }
 
   async create(data: Partial<T>): Promise<ApiResponse<T>> {
     const response = await api.post(this.endpoint, data);
-    return response.data;
+    return {
+      ...response.data,
+      status: response.status
+    };
   }
 
   async update(id: string, data: Partial<T>): Promise<ApiResponse<T>> {
     const response = await api.put(`${this.endpoint}/${id}`, data);
-    return response.data;
+    return {
+      ...response.data,
+      status: response.status
+    };
   }
 
   async delete(id: string): Promise<ApiResponse<void>> {
     const response = await api.delete(`${this.endpoint}/${id}`);
-    return response.data;
+    return {
+      ...response.data,
+      status: response.status
+    };
   }
 } 

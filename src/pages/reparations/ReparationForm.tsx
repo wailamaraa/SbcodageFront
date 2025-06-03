@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Car, Plus, X, User, Package, Wrench, FileText } from 'lucide-react';
 import { reparationsApi } from '../../services/api/reparations';
 import { carsApi } from '../../services/api/cars';
@@ -13,6 +13,15 @@ import Select from '../../components/ui/Select';
 import TextArea from '../../components/ui/TextArea';
 import Button from '../../components/ui/Button';
 import { formatCurrency } from '../../utils/formatters';
+import { toast } from 'react-hot-toast';
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: Array<{ field: string; message: string }>;
+  status?: number; // Add status code to the interface
+}
 
 const DEFAULT_FORM_DATA: Partial<Reparation> = {
   car: '',
@@ -31,24 +40,48 @@ const DEFAULT_FORM_DATA: Partial<Reparation> = {
 
 const ReparationForm: React.FC = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [cars, setCars] = useState<CarType[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState<Partial<Reparation>>(DEFAULT_FORM_DATA);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
-    data,
-    isLoading,
-    handleSubmit,
-    handleInputChange,
-    handleChange
+    handleInputChange: useFormHandleInputChange,
   } = useForm<Reparation>({
     service: reparationsApi,
     basePath: '/reparations',
-    id,
+    id: undefined, // Remove id from useForm
     initialData: DEFAULT_FORM_DATA
   });
 
+  // Fetch reparation data when editing
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      reparationsApi.getById(id).then((response: any) => { // Type as any temporarily to handle direct response
+        console.log('API Response for getById:', response);
+        // Check if response exists and has required fields
+        if (response && response._id) {
+          setFormData(response as Partial<Reparation>);
+        } else {
+          console.error('Failed to fetch reparation data:', response);
+          toast.error('Failed to load reparation data');
+          navigate('/reparations');
+        }
+      }).catch(error => {
+        console.error('Error fetching reparation data:', error);
+        toast.error('Failed to load reparation data');
+        navigate('/reparations');
+      }).finally(() => {
+        setLoading(false);
+      });
+    }
+  }, [id, navigate]);
+
+  // Fetch form options (cars, services, items)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -58,11 +91,31 @@ const ReparationForm: React.FC = () => {
           inventoryApi.getAll()
         ]);
 
-        if (carsRes.success && carsRes.data) setCars(carsRes.data);
-        if (servicesRes.success && servicesRes.data) setServices(servicesRes.data);
-        if (itemsRes.success && itemsRes.data) setItems(itemsRes.data);
+        console.log('API Responses:', { carsRes, servicesRes, itemsRes });
+
+        // Handle direct response format for cars
+        if (Array.isArray(carsRes)) {
+          setCars(carsRes as CarType[]);
+        } else if (carsRes.success && carsRes.data) {
+          setCars(carsRes.data as CarType[]);
+        }
+
+        // Handle direct response format for services
+        if (Array.isArray(servicesRes)) {
+          setServices(servicesRes as Service[]);
+        } else if (servicesRes.success && servicesRes.data) {
+          setServices(servicesRes.data as Service[]);
+        }
+
+        // Handle direct response format for items
+        if (Array.isArray(itemsRes)) {
+          setItems(itemsRes as Item[]);
+        } else if (itemsRes.success && itemsRes.data) {
+          setItems(itemsRes.data as Item[]);
+        }
       } catch (error) {
         console.error('Error fetching form data:', error);
+        toast.error('Failed to load form options');
       } finally {
         setLoading(false);
       }
@@ -71,36 +124,573 @@ const ReparationForm: React.FC = () => {
     fetchData();
   }, []);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value,
+    }));
+  };
+
+  const handleChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
   const handleAddItem = () => {
-    handleChange('items', [...data.items, { item: '', quantity: 1 }]);
+    handleChange('items', [...(formData.items || []), { item: '', quantity: 1 }]);
   };
 
   const handleRemoveItem = (index: number) => {
-    const newItems = [...data.items];
+    const newItems = [...(formData.items || [])];
     newItems.splice(index, 1);
     handleChange('items', newItems);
   };
 
   const handleItemChange = (index: number, field: string, value: any) => {
-    const newItems = [...data.items];
+    const newItems = [...(formData.items || [])];
     newItems[index] = { ...newItems[index], [field]: value };
     handleChange('items', newItems);
   };
 
   const handleAddService = () => {
-    handleChange('services', [...data.services, { service: '', notes: '' }]);
+    handleChange('services', [...(formData.services || []), { service: '', notes: '' }]);
   };
 
   const handleRemoveService = (index: number) => {
-    const newServices = [...data.services];
+    const newServices = [...(formData.services || [])];
     newServices.splice(index, 1);
     handleChange('services', newServices);
   };
 
   const handleServiceChange = (index: number, field: string, value: any) => {
-    const newServices = [...data.services];
+    const newServices = [...(formData.services || [])];
     newServices[index] = { ...newServices[index], [field]: value };
     handleChange('services', newServices);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      toast.error('Please wait while we process your request...', {
+        duration: 2000,
+        position: 'top-center',
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+          borderRadius: '8px',
+          padding: '16px',
+        },
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    console.log('Submitting form data:', formData);
+
+    try {
+      let response;
+      if (id) {
+        // For update, we need to send a PUT request to /api/reparations/:id/full
+        console.log(`Updating reparation with id: ${id}`, formData);
+
+        // Show loading toast
+        const loadingToast = toast.loading('Updating reparation...', {
+          position: 'top-center',
+          style: {
+            background: '#3B82F6',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+        });
+
+        // Prepare the full update data according to API spec
+        const updateData = {
+          description: formData.description,
+          technician: formData.technician,
+          laborCost: formData.laborCost,
+          status: formData.status,
+          notes: formData.notes,
+          items: formData.items?.map(item => ({
+            item: typeof item.item === 'string' ? item.item : item.item?._id || '',
+            quantity: item.quantity
+          })) || [],
+          services: formData.services?.map(service => ({
+            service: typeof service.service === 'string' ? service.service : service.service?._id || '',
+            notes: service.notes
+          })) || []
+        };
+
+        console.log('Full update data prepared:', updateData);
+        response = await reparationsApi.updateFull(id, updateData);
+
+        // Dismiss loading toast
+        toast.dismiss(loadingToast);
+
+        // Check response status code
+        if (response?.status === 200 || response?.status === 201) {
+          toast.success(
+            'Reparation updated successfully!',
+            {
+              duration: 3000,
+              position: 'top-center',
+              style: {
+                background: '#10B981',
+                color: '#fff',
+                borderRadius: '8px',
+                padding: '16px',
+              },
+              icon: '✅',
+            }
+          );
+
+          // Add a small delay before navigation to ensure the toast is visible
+          setTimeout(() => {
+            navigate('/reparations');
+          }, 1000);
+          return;
+        }
+      } else {
+        // For create, we need to send a POST request to /api/reparations
+        console.log('Creating new reparation:', formData);
+
+        // Show loading toast
+        const loadingToast = toast.loading('Creating new reparation...', {
+          position: 'top-center',
+          style: {
+            background: '#3B82F6',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+        });
+
+        const createData = {
+          car: typeof formData.car === 'string' ? formData.car : formData.car?._id,
+          description: formData.description,
+          technician: formData.technician,
+          laborCost: formData.laborCost,
+          items: formData.items?.map(item => ({
+            item: typeof item.item === 'string' ? item.item : item.item?._id,
+            quantity: item.quantity
+          })) || [],
+          services: formData.services?.map(service => ({
+            service: typeof service.service === 'string' ? service.service : service.service?._id,
+            notes: service.notes
+          })) || [],
+          notes: formData.notes,
+          status: formData.status,
+          startDate: formData.startDate
+        };
+        console.log('Create data prepared:', createData);
+        response = await reparationsApi.create(createData as Reparation);
+
+        // Dismiss loading toast
+        toast.dismiss(loadingToast);
+
+        // Check response status code
+        if (response?.status === 200 || response?.status === 201) {
+          toast.success(
+            'New reparation created successfully!',
+            {
+              duration: 3000,
+              position: 'top-center',
+              style: {
+                background: '#10B981',
+                color: '#fff',
+                borderRadius: '8px',
+                padding: '16px',
+              },
+              icon: '✅',
+            }
+          );
+
+          // Add a small delay before navigation to ensure the toast is visible
+          setTimeout(() => {
+            navigate('/reparations');
+          }, 1000);
+          return;
+        }
+      }
+
+      // Handle error cases with better error messages
+      if (response?.status === 400) {
+        // Validation errors
+        if (response?.errors && Array.isArray(response.errors)) {
+          response.errors.forEach((error: any) =>
+            toast.error(`${error.field}: ${error.message}`, {
+              duration: 4000,
+              position: 'top-center',
+              style: {
+                background: '#EF4444',
+                color: '#fff',
+                borderRadius: '8px',
+                padding: '16px',
+              },
+              icon: '❌',
+            })
+          );
+        } else {
+          toast.error('Invalid data provided. Please check your inputs.', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+        }
+      } else if (response?.status === 401) {
+        toast.error('You are not authorized to perform this action. Please log in again.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+          icon: '❌',
+        });
+        // Redirect to login after a delay
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else if (response?.status === 403) {
+        toast.error('You do not have permission to perform this action.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+          icon: '❌',
+        });
+      } else if (response?.status === 404) {
+        toast.error('The requested resource was not found.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+          icon: '❌',
+        });
+      } else if (response?.status === 500) {
+        toast.error('An internal server error occurred. Please try again later.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+          icon: '❌',
+        });
+      } else {
+        toast.error(
+          response?.message || `Failed to ${id ? 'update' : 'create'} reparation.`,
+          {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          }
+        );
+      }
+    } catch (error: any) {
+      console.error('Error during form submission:', error);
+
+      // Handle network errors
+      if (!error.response) {
+        toast.error('Network error. Please check your internet connection.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+          icon: '❌',
+        });
+        return;
+      }
+
+      // Handle specific error status codes
+      const status = error.response?.status;
+      if (status === 401) {
+        toast.error('Your session has expired. Please log in again.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+          icon: '❌',
+        });
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else if (status === 403) {
+        toast.error('You do not have permission to perform this action.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+          icon: '❌',
+        });
+      } else if (status === 404) {
+        toast.error('The requested resource was not found.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+          icon: '❌',
+        });
+      } else if (status === 500) {
+        toast.error('An internal server error occurred. Please try again later.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+          icon: '❌',
+        });
+      } else {
+        toast.error(
+          error.response?.data?.message || `An error occurred while ${id ? 'updating' : 'creating'} the reparation.`,
+          {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          }
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+
+    if (window.confirm('Are you sure you want to delete this reparation? This will return all items to stock.')) {
+      try {
+        setIsSubmitting(true);
+
+        // Show loading toast
+        const loadingToast = toast.loading('Deleting reparation...', {
+          position: 'top-center',
+          style: {
+            background: '#3B82F6',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+          },
+        });
+
+        const response = await reparationsApi.delete(id);
+
+        // Dismiss loading toast
+        toast.dismiss(loadingToast);
+
+        // Check response status code
+        if (response?.status === 200 || response?.status === 204) {
+          toast.success('Reparation deleted successfully', {
+            duration: 3000,
+            position: 'top-center',
+            style: {
+              background: '#10B981',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '✅',
+          });
+
+          // Add a small delay before navigation
+          setTimeout(() => {
+            navigate('/reparations');
+          }, 1000);
+        } else if (response?.status === 401) {
+          toast.error('Your session has expired. Please log in again.', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+        } else if (response?.status === 403) {
+          toast.error('You do not have permission to delete this reparation.', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+        } else if (response?.status === 404) {
+          toast.error('The reparation was not found.', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+        } else {
+          toast.error(response?.message || 'Failed to delete reparation', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+        }
+      } catch (error: any) {
+        console.error('Error deleting reparation:', error);
+
+        // Handle network errors
+        if (!error.response) {
+          toast.error('Network error. Please check your internet connection.', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+          return;
+        }
+
+        // Handle specific error status codes
+        const status = error.response?.status;
+        if (status === 401) {
+          toast.error('Your session has expired. Please log in again.', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+        } else if (status === 403) {
+          toast.error('You do not have permission to delete this reparation.', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+        } else if (status === 404) {
+          toast.error('The reparation was not found.', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+        } else if (status === 500) {
+          toast.error('An internal server error occurred. Please try again later.', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+        } else {
+          toast.error('An error occurred while deleting the reparation', {
+            duration: 4000,
+            position: 'top-center',
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+              borderRadius: '8px',
+              padding: '16px',
+            },
+            icon: '❌',
+          });
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
   };
 
   const formatCarOption = (car: CarType) => {
@@ -121,27 +711,11 @@ const ReparationForm: React.FC = () => {
     label: `${service.name} - ${formatCurrency(service.price)} (${service.duration}h)`
   });
 
-  // Helper function to find the selected item/service name
-  const getSelectedItemName = (id: string) => {
-    const item = items.find(i => i._id === id);
-    return item ? formatItemOption(item).label : id;
-  };
-
-  const getSelectedServiceName = (id: string) => {
-    const service = services.find(s => s._id === id);
-    return service ? formatServiceOption(service).label : id;
-  };
-
-  const getSelectedCarName = (id: string) => {
-    const car = cars.find(c => c._id === id);
-    return car ? formatCarOption(car).label : id;
-  };
-
   return (
     <BaseForm
       title={id ? 'Edit Reparation' : 'New Reparation'}
       basePath="/reparations"
-      isLoading={isLoading || loading}
+      isLoading={loading || isSubmitting}
       onSubmit={handleSubmit}
     >
       <div className="space-y-6">
@@ -154,7 +728,7 @@ const ReparationForm: React.FC = () => {
           <Select
             label="Select Vehicle"
             name="car"
-            value={typeof data.car === 'string' ? data.car : data.car?._id || ''}
+            value={typeof formData.car === 'string' ? formData.car : formData.car?._id || ''}
             onChange={handleInputChange}
             required
             options={cars.map(formatCarOption)}
@@ -172,7 +746,7 @@ const ReparationForm: React.FC = () => {
             <Input
               label="Technician"
               name="technician"
-              value={data.technician}
+              value={formData.technician}
               onChange={handleInputChange}
               required
               placeholder="Enter technician name"
@@ -182,7 +756,7 @@ const ReparationForm: React.FC = () => {
               label="Labor Cost"
               name="laborCost"
               type="number"
-              value={data.laborCost}
+              value={formData.laborCost}
               onChange={handleInputChange}
               required
               min={0}
@@ -195,7 +769,7 @@ const ReparationForm: React.FC = () => {
             <TextArea
               label="Description"
               name="description"
-              value={data.description}
+              value={formData.description}
               onChange={handleInputChange}
               required
               placeholder="Enter repair description"
@@ -221,7 +795,7 @@ const ReparationForm: React.FC = () => {
             </Button>
           </div>
           <div className="space-y-4">
-            {data.items.map((item, index) => (
+            {(formData.items || []).map((item, index) => (
               <div key={index} className="flex gap-4 items-start bg-white dark:bg-gray-700 p-4 rounded-md">
                 <div className="flex-grow">
                   <Select
@@ -252,7 +826,7 @@ const ReparationForm: React.FC = () => {
                 </Button>
               </div>
             ))}
-            {data.items.length === 0 && (
+            {(formData.items || []).length === 0 && (
               <div className="text-center py-4 text-gray-500">
                 No items added. Click "Add Item" to start adding parts.
               </div>
@@ -277,7 +851,7 @@ const ReparationForm: React.FC = () => {
             </Button>
           </div>
           <div className="space-y-4">
-            {data.services.map((service, index) => (
+            {(formData.services || []).map((service, index) => (
               <div key={index} className="flex gap-4 items-start bg-white dark:bg-gray-700 p-4 rounded-md">
                 <div className="flex-grow">
                   <Select
@@ -306,7 +880,7 @@ const ReparationForm: React.FC = () => {
                 </Button>
               </div>
             ))}
-            {data.services.length === 0 && (
+            {(formData.services || []).length === 0 && (
               <div className="text-center py-4 text-gray-500">
                 No services added. Click "Add Service" to start adding services.
               </div>
@@ -324,7 +898,7 @@ const ReparationForm: React.FC = () => {
             <TextArea
               label="Additional Notes"
               name="notes"
-              value={data.notes}
+              value={formData.notes}
               onChange={handleInputChange}
               placeholder="Enter any additional notes"
               rows={3}
@@ -333,7 +907,7 @@ const ReparationForm: React.FC = () => {
             <Select
               label="Status"
               name="status"
-              value={data.status}
+              value={formData.status}
               onChange={handleInputChange}
               required
               options={[
