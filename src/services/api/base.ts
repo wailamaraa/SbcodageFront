@@ -19,15 +19,26 @@ export interface ApiResponse<T> {
   message?: string;
   errors?: ApiError[];
   status?: number;
+  count?: number;
+  total?: number;
+  page?: number;
+  pages?: number;
 }
 
 export class BaseApiService<T> {
-  constructor(private endpoint: string) { }
+  constructor(protected endpoint: string) { }
 
   async getAll(params: QueryParams = {}): Promise<ApiResponse<T[]>> {
     const response = await api.get(this.endpoint, { params });
     return {
-      ...response.data,
+      success: response.data.success ?? true,
+      data: response.data.data,
+      message: response.data.message,
+      errors: response.data.errors,
+      count: response.data.count,
+      total: response.data.total,
+      page: response.data.page,
+      pages: response.data.pages,
       status: response.status
     };
   }

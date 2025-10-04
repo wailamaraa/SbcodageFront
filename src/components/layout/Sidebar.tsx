@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Home, Package, Truck, Car, Users, BarChart3, Settings,
-  Menu, X, Tag, LogOut, Wrench, Cog, Layers
+  Menu, X, Tag, LogOut, Wrench, Cog, Layers, History
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -59,6 +59,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, toggleSidebar, isOpen }) =>
       path: '/services',
       icon: <Cog size={20} />,
       description: 'Available services'
+    },
+    {
+      name: 'Stock Transactions',
+      path: '/stock-transactions',
+      icon: <History size={20} />,
+      description: 'Transaction history'
     },
     {
       name: 'Reports',

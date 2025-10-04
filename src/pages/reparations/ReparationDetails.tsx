@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Car, User, DollarSign, Clock, FileText, Package, Wrench, PlayCircle, CheckCircle } from 'lucide-react';
+import { Car, DollarSign, Clock, FileText, Package, Wrench, PlayCircle, CheckCircle, TrendingUp } from 'lucide-react';
 import { reparationsApi } from '../../services/api/reparations';
 import { BaseDetails } from '../../components/common/BaseDetails';
 import { useDetails } from '../../hooks/useDetails';
@@ -82,6 +82,17 @@ const ReparationDetails: React.FC = () => {
 
   // Get the reparation status from the data field
   const reparationStatus = (reparation as any)?.data?.status || reparation?.status || 'pending';
+  
+  // Format status for display
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      'pending': 'Pending',
+      'in_progress': 'Working',
+      'completed': 'Finished',
+      'cancelled': 'Cancelled'
+    };
+    return labels[status] || status;
+  };
 
   return (
     <BaseDetails
@@ -125,7 +136,7 @@ const ReparationDetails: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
                 <Badge variant={statusMap[reparationStatus]} className="mt-1">
-                  {reparationStatus}
+                  {getStatusLabel(reparationStatus)}
                 </Badge>
               </div>
               <div>
@@ -151,13 +162,33 @@ const ReparationDetails: React.FC = () => {
                 const item = typeof itemEntry.item === 'string'
                   ? { name: itemEntry.item }
                   : itemEntry.item;
+                const buyPrice = itemEntry.buyPrice || 0;
+                const sellPrice = itemEntry.sellPrice || itemEntry.price || 0;
+                const totalPrice = itemEntry.totalPrice || (sellPrice * itemEntry.quantity);
+                const itemProfit = (sellPrice - buyPrice) * itemEntry.quantity;
+                
                 return (
-                  <div key={index} className="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-gray-500">Quantity: {itemEntry.quantity}</p>
+                  <div key={index} className="bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="font-medium">{item.name}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          <span>Qty: {itemEntry.quantity}</span>
+                          <span>Buy: {formatCurrency(buyPrice)}</span>
+                          <span className="text-green-600 dark:text-green-400 font-medium">
+                            Sell: {formatCurrency(sellPrice)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatCurrency(totalPrice)}</p>
+                        {itemProfit > 0 && (
+                          <p className="text-sm text-blue-600 dark:text-blue-400">
+                            +{formatCurrency(itemProfit)} profit
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <p className="font-medium">{formatCurrency(itemEntry.price || 0)}</p>
                   </div>
                 );
               })}
@@ -207,7 +238,7 @@ const ReparationDetails: React.FC = () => {
           </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <p>Parts Cost</p>
+              <p>Parts Cost (to client)</p>
               <p className="font-medium">{formatCurrency(reparation?.partsCost || 0)}</p>
             </div>
             <div className="flex justify-between items-center">
@@ -218,12 +249,56 @@ const ReparationDetails: React.FC = () => {
               <p>Labor Cost</p>
               <p className="font-medium">{formatCurrency(reparation?.laborCost || 0)}</p>
             </div>
-            <div className="flex justify-between items-center pt-2 border-t">
-              <p className="font-medium">Total Cost</p>
-              <p className="font-medium text-lg">{formatCurrency(reparation?.totalCost || 0)}</p>
+            {reparation?.totalProfit !== undefined && reparation.totalProfit > 0 && (
+              <div className="flex justify-between items-center text-blue-600 dark:text-blue-400">
+                <p className="font-medium">Parts Profit</p>
+                <p className="font-bold">+{formatCurrency(reparation.totalProfit)}</p>
+              </div>
+            )}
+            <div className="flex justify-between items-center pt-2 border-t border-gray-300 dark:border-gray-600">
+              <p className="font-bold text-lg">Total Revenue</p>
+              <p className="font-bold text-xl text-green-600 dark:text-green-400">{formatCurrency(reparation?.totalCost || 0)}</p>
             </div>
           </div>
         </div>
+
+        {reparation?.totalProfit !== undefined && reparation.totalProfit > 0 && (
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-6 rounded-lg shadow border-2 border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp size={24} className="text-blue-600 dark:text-blue-400" />
+              <h3 className="text-xl font-bold text-blue-900 dark:text-blue-100">Profit Analysis</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Parts Profit</p>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                  {formatCurrency(reparation.totalProfit)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  From {reparation.items?.length || 0} items
+                </p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Parts Cost</p>
+                <p className="text-2xl font-semibold text-gray-700 dark:text-gray-300">
+                  {formatCurrency(reparation.partsCost || 0)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Charged to client
+                </p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Profit Margin</p>
+                <p className="text-2xl font-semibold text-green-600 dark:text-green-400">
+                  {reparation.partsCost && reparation.partsCost > reparation.totalProfit ? ((reparation.totalProfit / (reparation.partsCost - reparation.totalProfit)) * 100).toFixed(1) : '0'}%
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  On parts sold
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {reparation?.notes && (
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">

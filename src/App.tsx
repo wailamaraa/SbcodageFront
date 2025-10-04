@@ -34,6 +34,15 @@ import CarsList from './pages/vehicles/CarsList';
 import CarDetails from './pages/vehicles/CarDetails';
 import CarForm from './pages/vehicles/CarForm';
 
+// User Management
+// TODO: Create user management pages
+// import UsersList from './pages/users/UsersList';
+// import UserDetails from './pages/users/UserDetails';
+// import UserForm from './pages/users/UserForm';
+
+// Stock Transactions
+import StockTransactionsList from './pages/stock-transactions/StockTransactionsList';
+
 // Services & Repairs
 import ServicesList from './pages/services/ServicesList';
 import ServiceDetails from './pages/services/ServiceDetails';
@@ -41,11 +50,6 @@ import ServiceForm from './pages/services/ServiceForm';
 import ReparationsList from './pages/reparations/ReparationsList';
 import ReparationDetails from './pages/reparations/ReparationDetails';
 import ReparationForm from './pages/reparations/ReparationForm';
-
-// User Management
-import UsersList from './pages/users/UsersList';
-import UserDetails from './pages/users/UserDetails';
-import UserForm from './pages/users/UserForm';
 
 function App() {
   return (
@@ -236,6 +240,15 @@ function App() {
               </ProtectedRoute>
             } />
 
+            {/* Stock Transactions Routes */}
+            <Route path="/stock-transactions" element={
+              <ProtectedRoute>
+                <Layout>
+                  <StockTransactionsList />
+                </Layout>
+              </ProtectedRoute>
+            } />
+
             {/* Reparations Routes */}
             <Route path="/reparations" element={
               <ProtectedRoute>
@@ -266,8 +279,8 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* Users Routes */}
-            <Route path="/users" element={
+            {/* Users Routes - TODO: Create user management pages */}
+            {/* <Route path="/users" element={
               <ProtectedRoute requireAdmin>
                 <Layout>
                   <UsersList />
@@ -294,7 +307,7 @@ function App() {
                   <UserForm isEditing />
                 </Layout>
               </ProtectedRoute>
-            } />
+            } /> */}
 
             {/* 404 route */}
             <Route path="*" element={<NotFound />} />

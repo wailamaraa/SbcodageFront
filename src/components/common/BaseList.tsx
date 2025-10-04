@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
 import { BaseApiService } from '../../services/api/base';
@@ -38,10 +38,25 @@ export function BaseList<T extends { _id: string }>({
   emptyMessage = 'No items found',
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS
 }: BaseListProps<T>) {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState('-createdAt');
+  // Create a unique key for this list's filters
+  const filterKey = `filters_${basePath}`;
+  
+  // Load saved filters from sessionStorage
+  const getSavedFilters = () => {
+    try {
+      const saved = sessionStorage.getItem(filterKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const savedFilters = getSavedFilters();
+  
+  const [page, setPage] = useState(savedFilters?.page || 1);
+  const [pageSize, setPageSize] = useState(savedFilters?.pageSize || DEFAULT_PAGE_SIZE);
+  const [search, setSearch] = useState(savedFilters?.search || '');
+  const [sort, setSort] = useState(savedFilters?.sort || '-createdAt');
   const navigate = useNavigate();
 
   const {
@@ -56,6 +71,15 @@ export function BaseList<T extends { _id: string }>({
     service,
     basePath
   });
+
+  useEffect(() => {
+    sessionStorage.setItem(filterKey, JSON.stringify({
+      page,
+      pageSize,
+      search,
+      sort
+    }));
+  }, [page, pageSize, search, sort, filterKey]);
 
   useEffect(() => {
     loadItems({

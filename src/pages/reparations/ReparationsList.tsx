@@ -1,5 +1,5 @@
 import React from 'react';
-import { Car, User, DollarSign, Clock } from 'lucide-react';
+import { Car, User, DollarSign, Clock, TrendingUp } from 'lucide-react';
 import { reparationsApi } from '../../services/api/reparations';
 import { Reparation } from '../../types';
 import { BaseList } from '../../components/common/BaseList';
@@ -69,12 +69,18 @@ const ReparationsList: React.FC = () => {
           cancelled: 'danger'
         } as const;
 
+        const statusLabels = {
+          pending: 'Pending',
+          in_progress: 'Working',
+          completed: 'Finished',
+          cancelled: 'Cancelled'
+        } as const;
+
         const status = reparation.status || 'pending';
-        const statusText = status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
 
         return (
           <Badge variant={statusVariants[status]}>
-            {statusText}
+            {statusLabels[status] || status}
           </Badge>
         );
       },
@@ -89,6 +95,23 @@ const ReparationsList: React.FC = () => {
         </div>
       ),
       className: 'min-w-[120px]'
+    },
+    {
+      header: 'Profit',
+      accessor: (reparation: Reparation) => {
+        if (!reparation.totalProfit || reparation.totalProfit <= 0) {
+          return <span className="text-gray-400 text-sm">-</span>;
+        }
+        return (
+          <div className="flex items-center gap-2">
+            <TrendingUp size={16} className="text-blue-600 dark:text-blue-400" />
+            <span className="font-medium text-blue-600 dark:text-blue-400">
+              {formatCurrency(reparation.totalProfit)}
+            </span>
+          </div>
+        );
+      },
+      className: 'min-w-[100px]'
     },
     {
       header: 'Created At',

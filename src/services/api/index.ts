@@ -7,3 +7,5 @@ export * from './cars';
 export * from './dashboard';
 export * from './services';
 export * from './reparations';
+export * from './stockTransactions';
+export * from './inventory';

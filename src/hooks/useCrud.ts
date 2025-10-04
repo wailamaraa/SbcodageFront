@@ -14,15 +14,17 @@ export function useCrud<T>({ service, basePath }: UseCrudOptions<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentFilters, setCurrentFilters] = useState<QueryParams>({});
   const navigate = useNavigate();
 
   const loadItems = useCallback(async (params: QueryParams = {}) => {
     setIsLoading(true);
+    setCurrentFilters(params); // Store current filters
     try {
       const response = await service.getAll(params);
       if (response?.success) {
-        setItems(response.data);
-        setTotal(response.count);
+        setItems(response.data || []);
+        setTotal(response.count || 0);
         setCurrentPage(response.page || 1);
         setTotalPages(response.pages || 1);
         return {
@@ -95,14 +97,15 @@ export function useCrud<T>({ service, basePath }: UseCrudOptions<T>) {
     try {
       await service.delete(id);
       toast.success('Item deleted successfully');
-      loadItems(); // Reload the list
+      // Reload the list with current filters
+      loadItems(currentFilters);
     } catch (error) {
       console.error('Failed to delete item:', error);
       toast.error('Failed to delete item');
     } finally {
       setIsLoading(false);
     }
-  }, [service, loadItems]);
+  }, [service, loadItems, currentFilters]);
 
   return {
     items,

@@ -38,7 +38,11 @@ const DEFAULT_FORM_DATA: Partial<Reparation> = {
   startDate: new Date().toISOString()
 };
 
-const ReparationForm: React.FC = () => {
+interface ReparationFormProps {
+  isEditing?: boolean;
+}
+
+const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [cars, setCars] = useState<CarType[]>([]);
@@ -701,10 +705,15 @@ const ReparationForm: React.FC = () => {
     };
   };
 
-  const formatItemOption = (item: Item) => ({
-    value: item._id,
-    label: `${item.name} - ${formatCurrency(item.price)} (${item.quantity} in stock)`
-  });
+  const formatItemOption = (item: Item) => {
+    const sellPrice = item.sellPrice || item.price || 0;
+    const buyPrice = item.buyPrice || item.price || 0;
+    const profit = sellPrice - buyPrice;
+    return {
+      value: item._id,
+      label: `${item.name} - Sell: ${formatCurrency(sellPrice)} (Buy: ${formatCurrency(buyPrice)}, +${formatCurrency(profit)}) - Stock: ${item.quantity}`
+    };
+  };
 
   const formatServiceOption = (service: Service) => ({
     value: service._id,
@@ -912,8 +921,8 @@ const ReparationForm: React.FC = () => {
               required
               options={[
                 { value: 'pending', label: 'Pending' },
-                { value: 'in_progress', label: 'In Progress' },
-                { value: 'completed', label: 'Completed' },
+                { value: 'in_progress', label: 'Working' },
+                { value: 'completed', label: 'Finished' },
                 { value: 'cancelled', label: 'Cancelled' }
               ]}
             />

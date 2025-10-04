@@ -7,13 +7,16 @@ import { useForm } from '../../hooks/useForm';
 import Input from '../../components/ui/Input';
 import TextArea from '../../components/ui/TextArea';
 
-const CategoryForm: React.FC = () => {
+interface CategoryFormProps {
+  isEditing?: boolean;
+}
+
+const CategoryForm: React.FC<CategoryFormProps> = ({ isEditing = false }) => {
   const { id } = useParams();
   const {
     data,
     isLoading,
     handleSubmit,
-    handleInputChange
   } = useForm<Category>({
     service: categoriesApi,
     basePath: '/categories',

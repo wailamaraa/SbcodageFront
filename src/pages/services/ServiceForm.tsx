@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { servicesApi } from '../../services/api/services';
 import { Service } from '../../types';
 import { BaseForm } from '../../components/common/BaseForm';
-import { useForm } from '../../hooks/useForm';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import TextArea from '../../components/ui/TextArea';
@@ -18,13 +17,15 @@ const DEFAULT_FORM_DATA: Partial<Service> = {
   status: 'active'
 };
 
-const ServiceForm: React.FC = () => {
+interface ServiceFormProps {
+  isEditing?: boolean;
+}
+
+const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   console.log('ServiceForm rendered with id:', id);
-
-  const [formData, setFormData] = useState<Partial<Service>>(DEFAULT_FORM_DATA);
   const [isLoading, setIsLoading] = useState(false);
 
   const {

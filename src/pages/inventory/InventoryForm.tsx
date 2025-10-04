@@ -115,7 +115,6 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ isEditing }) => {
             label="Description"
             name="description"
             value={data.description || ''}
-            onChange={handleInputChange}
             placeholder="Enter item description"
             rows={4}
           />
@@ -124,18 +123,64 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ isEditing }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Input
-              label="Price"
-              name="price"
+              label="Buy Price (from supplier)"
+              name="buyPrice"
               type="number"
-              value={data.price || ''}
+              value={data.buyPrice || ''}
               onChange={handleInputChange}
               required
-              placeholder="Enter item price"
+              placeholder="Enter purchase price"
               min={0}
               step={0.01}
             />
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Price you pay to the supplier
+            </p>
           </div>
 
+          <div>
+            <Input
+              label="Sell Price (to client)"
+              name="sellPrice"
+              type="number"
+              value={data.sellPrice || ''}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter selling price"
+              min={0}
+              step={0.01}
+            />
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Price charged to the client
+            </p>
+          </div>
+        </div>
+
+        {/* Profit Margin Display */}
+        {data.buyPrice && data.sellPrice && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Profit Margin
+                </p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  ${(Number(data.sellPrice) - Number(data.buyPrice)).toFixed(2)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Profit Percentage
+                </p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {((Number(data.sellPrice) - Number(data.buyPrice)) / Number(data.buyPrice) * 100).toFixed(2)}%
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Input
               label="Quantity"
@@ -146,6 +191,17 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ isEditing }) => {
               required
               placeholder="Enter item quantity"
               min={0}
+            />
+          </div>
+
+          <div>
+            <Input
+              label="Location"
+              name="location"
+              type="text"
+              value={data.location || ''}
+              onChange={handleInputChange}
+              placeholder="e.g., Shelf A-12, Warehouse B"
             />
           </div>
         </div>
@@ -176,8 +232,8 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ isEditing }) => {
               required
               options={[
                 { value: 'available', label: 'Available' },
-                { value: 'unavailable', label: 'Unavailable' },
-                { value: 'discontinued', label: 'Discontinued' }
+                { value: 'low_stock', label: 'Low Stock' },
+                { value: 'out_of_stock', label: 'Out of Stock' }
               ]}
             />
           </div>

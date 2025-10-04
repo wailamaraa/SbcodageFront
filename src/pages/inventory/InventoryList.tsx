@@ -24,14 +24,45 @@ const InventoryList: React.FC = () => {
       className: 'min-w-[300px]'
     },
     {
-      header: 'Price',
+      header: 'Buy Price',
       accessor: (item: Item) => (
         <div className="flex items-center gap-2">
           <DollarSign size={16} className="text-gray-400" />
-          <span>{formatCurrency(item.price)}</span>
+          <span className="text-sm">{formatCurrency(item.buyPrice || item.price || 0)}</span>
         </div>
       ),
-      className: 'min-w-[120px]'
+      className: 'min-w-[100px]'
+    },
+    {
+      header: 'Sell Price',
+      accessor: (item: Item) => (
+        <div className="flex items-center gap-2">
+          <DollarSign size={16} className="text-green-600 dark:text-green-400" />
+          <span className="text-sm font-medium">{formatCurrency(item.sellPrice || item.price || 0)}</span>
+        </div>
+      ),
+      className: 'min-w-[100px]'
+    },
+    {
+      header: 'Profit',
+      accessor: (item: Item) => {
+        const buyPrice = item.buyPrice || item.price || 0;
+        const sellPrice = item.sellPrice || item.price || 0;
+        const profit = sellPrice - buyPrice;
+        const profitPercent = buyPrice > 0 ? ((profit / buyPrice) * 100).toFixed(1) : '0';
+        
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+              {formatCurrency(profit)}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {profitPercent}%
+            </span>
+          </div>
+        );
+      },
+      className: 'min-w-[100px]'
     },
     {
       header: 'Quantity',

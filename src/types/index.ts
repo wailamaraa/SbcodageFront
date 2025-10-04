@@ -39,7 +39,6 @@ export interface Vehicle {
   owner: {
     name: string;
     email: string;
-    phone?: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -50,16 +49,21 @@ export interface Item {
   name: string;
   description?: string;
   quantity: number;
-  price: number;
+  buyPrice: number; // Purchase price from supplier
+  sellPrice: number; // Price charged to client
+  profitMargin?: number; // Virtual field: sellPrice - buyPrice
+  profitMarginPercent?: string; // Virtual field: profit percentage
   category: Category | string | null;
   fournisseur: Supplier | string | null;
-  status: 'available' | 'low_stock' | 'out_of_stock' | 'used';
+  status: 'available' | 'low_stock' | 'out_of_stock';
   threshold: number;
   location?: string;
   itemCode: string;
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  // Deprecated field for backward compatibility
+  price?: number;
 }
 
 export interface Car {
@@ -197,6 +201,8 @@ export interface Reparation {
       name: string;
       description?: string;
       quantity: number;
+      buyPrice?: number;
+      sellPrice?: number;
       price: number;
       category: string;
       status: string;
@@ -207,7 +213,10 @@ export interface Reparation {
       updatedAt: string;
     };
     quantity: number;
-    price: number;
+    buyPrice: number; // Price at time of use
+    sellPrice: number; // Price charged to client
+    totalPrice: number; // sellPrice * quantity
+    price?: number; // Deprecated
   }>;
   services: Array<{
     _id: string;
@@ -230,6 +239,7 @@ export interface Reparation {
   partsCost: number;
   laborCost: number;
   servicesCost: number;
+  totalProfit?: number; // Profit from parts only
   notes?: string;
   createdBy: {
     _id: string;
@@ -237,4 +247,35 @@ export interface Reparation {
   };
   createdAt: string;
   updatedAt: string;
+}
+
+export interface StockTransaction {
+  _id: string;
+  item: string | {
+    _id: string;
+    name: string;
+    itemCode: string;
+  };
+  type: 'purchase' | 'sale' | 'adjustment' | 'reparation_use' | 'reparation_return' | 'damage' | 'return_to_supplier';
+  quantity: number;
+  quantityBefore: number;
+  quantityAfter: number;
+  unitPrice: number;
+  totalAmount: number;
+  reparation?: string | {
+    _id: string;
+    description: string;
+    status: string;
+  };
+  fournisseur?: string | {
+    _id: string;
+    name: string;
+  };
+  reference?: string;
+  notes?: string;
+  createdBy: {
+    _id: string;
+    name: string;
+  };
+  createdAt: string;
 }

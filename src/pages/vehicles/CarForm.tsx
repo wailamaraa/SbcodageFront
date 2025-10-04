@@ -14,10 +14,13 @@ interface CarFormData {
   vin?: string;
   status: 'active' | 'inactive';
   owner: {
-    name: string;
     email: string;
     phone?: string;
   };
+}
+
+interface CarFormProps {
+  isEditing?: boolean;
 }
 
 const DEFAULT_FORM_DATA: CarFormData = {
@@ -34,7 +37,7 @@ const DEFAULT_FORM_DATA: CarFormData = {
   }
 };
 
-const CarForm: React.FC = () => {
+const CarForm: React.FC<CarFormProps> = ({ isEditing }) => {
   const { id } = useParams();
   const { data, isLoading, handleSubmit, handleInputChange } = useForm<CarFormData>({
     service: carsApi,

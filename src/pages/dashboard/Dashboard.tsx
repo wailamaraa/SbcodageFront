@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Package, AlertCircle, Truck, Tag, ShoppingCart, Car, Wrench, TrendingUp, Calendar, ArrowUp, ArrowDown, DollarSign } from 'lucide-react';
+import { Package, AlertCircle, Truck, Tag, Car, Wrench, TrendingUp, ArrowUp, ArrowDown, DollarSign } from 'lucide-react';
 import { DashboardStats } from '../../types';
 import Card from '../../components/ui/Card';
 import DashboardFilters from '../../components/ui/DashboardFilters';
+import LowStockAlerts from '../../components/common/LowStockAlerts';
 import { Bar, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -49,7 +50,7 @@ const Dashboard: React.FC = () => {
         params.dateFin = endDate.toISOString().split('T')[0];
       }
 
-      const dashboardResponse = await axios.get('https://sbcodageback.onrender.com/api/dashboard', { params });
+      const dashboardResponse = await axios.get('http://localhost:5000/api/dashboard', { params });
       setStats(dashboardResponse.data.data);
     } catch (err) {
       setError('Failed to load dashboard data');
@@ -265,6 +266,48 @@ const Dashboard: React.FC = () => {
               <span className="ml-2 text-sm font-medium text-red-600 dark:text-red-300">Repairs</span>
             </div>
             <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{stats.counts.reparations}</h3>
+          </div>
+        </Card>
+      </div>
+
+      {/* Low Stock Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <LowStockAlerts maxItems={5} showViewAll={true} />
+        </div>
+        
+        {/* Profit Metrics Card */}
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-800/30 border-2 border-green-200 dark:border-green-700">
+          <div className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 rounded-full bg-green-600 dark:bg-green-500">
+                <DollarSign className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Profit Metrics</h3>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Revenue</p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  {formatCurrency(stats.repairs.revenue || 0)}
+                </p>
+              </div>
+              <div className="pt-4 border-t border-green-200 dark:border-green-700">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Inventory Value</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(stats.inventory.value || 0)}
+                </p>
+              </div>
+              <div className="pt-4 border-t border-green-200 dark:border-green-700">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Active Repairs</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.repairs.active}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {stats.repairs.completedLastMonth} completed last month
+                </p>
+              </div>
+            </div>
           </div>
         </Card>
       </div>

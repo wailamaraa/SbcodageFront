@@ -7,13 +7,16 @@ import { useForm } from '../../hooks/useForm';
 import Input from '../../components/ui/Input';
 import TextArea from '../../components/ui/TextArea';
 
-const SupplierForm: React.FC = () => {
+interface SupplierFormProps {
+  isEditing?: boolean;
+}
+
+const SupplierForm: React.FC<SupplierFormProps> = ({ isEditing = false }) => {
   const { id } = useParams();
   const {
     data,
     isLoading,
     handleSubmit,
-    handleInputChange
   } = useForm<Supplier>({
     service: suppliersApi,
     basePath: '/suppliers',
