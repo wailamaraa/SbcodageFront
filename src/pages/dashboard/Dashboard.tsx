@@ -50,7 +50,7 @@ const Dashboard: React.FC = () => {
         params.dateFin = endDate.toISOString().split('T')[0];
       }
 
-      const dashboardResponse = await axios.get('http://localhost:5000/api/dashboard', { params });
+      const dashboardResponse = await axios.get('https://sbcodageback.onrender.com/api/dashboard', { params });
       setStats(dashboardResponse.data.data);
     } catch (err) {
       setError('Failed to load dashboard data');
