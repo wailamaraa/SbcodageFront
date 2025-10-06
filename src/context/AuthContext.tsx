@@ -124,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
           }
 
-          const res = await axios.get('http://localhost:5000/api/auth/me');
+          const res = await axios.get('https://sbcodageback.onrender.com/api/auth/me');
           dispatch({ type: 'LOAD_USER_SUCCESS', payload: res.data.data });
         } else {
           dispatch({ type: 'LOAD_USER_FAILURE' });
@@ -141,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     dispatch({ type: 'LOGIN_REQUEST' });
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', {
+      const res = await axios.post('https://sbcodageback.onrender.com/api/auth/login', {
         email,
         password,
       });
@@ -169,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     dispatch({ type: 'LOGIN_REQUEST' });
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/register', {
+      const res = await axios.post('https://sbcodageback.onrender.com/api/auth/register', {
         name,
         email,
         password,
