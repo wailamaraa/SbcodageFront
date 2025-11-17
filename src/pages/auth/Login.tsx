@@ -47,7 +47,7 @@ const Login: React.FC = () => {
             <Lock className="h-12 w-12 text-blue-500" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Sign in to your account
+            Connectez-vous à votre compte
           </h2>
         </div>
 
@@ -59,28 +59,28 @@ const Login: React.FC = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <Input
-            label="Email Address"
+            label="Adresse Email"
             type="email"
             autoComplete="email"
             {...register('email', {
-              required: 'Email is required',
+              required: 'L\'email est requis',
               pattern: {
                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: 'Invalid email address'
+                message: 'Adresse email invalide'
               }
             })}
             error={errors.email?.message}
           />
 
           <Input
-            label="Password"
+            label="Mot de Passe"
             type="password"
             autoComplete="current-password"
             {...register('password', {
-              required: 'Password is required',
+              required: 'Le mot de passe est requis',
               minLength: {
                 value: 6,
-                message: 'Password must be at least 6 characters'
+                message: 'Le mot de passe doit contenir au moins 6 caractères'
               }
             })}
             error={errors.password?.message}
@@ -94,7 +94,7 @@ const Login: React.FC = () => {
               className="w-full"
               isLoading={isLoading}
             >
-              Sign in
+              Se Connecter
             </Button>
           </div>
         </form>

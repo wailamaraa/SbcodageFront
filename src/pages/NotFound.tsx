@@ -9,15 +9,15 @@ const NotFound: React.FC = () => {
       <div className="max-w-md w-full text-center">
         <FolderX className="h-24 w-24 text-blue-500 mx-auto" />
         <h1 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-          Page Not Found
+          Page Non Trouvée
         </h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          The page you're looking for doesn't exist or has been moved.
+          La page que vous recherchez n'existe pas ou a été déplacée.
         </p>
         <div className="mt-6">
           <Link to="/dashboard">
             <Button variant="primary" size="lg">
-              Go to Dashboard
+              Aller au Tableau de Bord
             </Button>
           </Link>
         </div>

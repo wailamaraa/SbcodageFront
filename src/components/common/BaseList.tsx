@@ -30,12 +30,12 @@ export function BaseList<T extends { _id: string }>({
   service,
   columns,
   sortOptions = [
-    { value: '-createdAt', label: 'Newest First' },
-    { value: 'createdAt', label: 'Oldest First' }
+    { value: '-createdAt', label: 'Plus Récent' },
+    { value: 'createdAt', label: 'Plus Ancien' }
   ],
-  searchPlaceholder = 'Search...',
-  createButtonLabel = 'New Item',
-  emptyMessage = 'No items found',
+  searchPlaceholder = 'Rechercher...',
+  createButtonLabel = 'Nouvel Élément',
+  emptyMessage = 'Aucun élément trouvé',
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS
 }: BaseListProps<T>) {
   // Create a unique key for this list's filters
@@ -162,7 +162,7 @@ export function BaseList<T extends { _id: string }>({
             <Select
               value={pageSize.toString()}
               onChange={e => { setPage(1); setPageSize(Number(e.target.value)); }}
-              options={pageSizeOptions.map(size => ({ value: size.toString(), label: `${size} per page` }))}
+              options={pageSizeOptions.map(size => ({ value: size.toString(), label: `${size} par page` }))}
               icon={<Filter size={20} className="text-gray-400" />}
             />
           </div>
@@ -181,7 +181,7 @@ export function BaseList<T extends { _id: string }>({
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {items.length} of {total} items
+              Affichage de {items.length} sur {total} éléments
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -190,10 +190,10 @@ export function BaseList<T extends { _id: string }>({
                 onClick={() => setPage(page - 1)}
                 disabled={currentPage === 1}
               >
-                Previous
+                Précédent
               </Button>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                Page {currentPage} of {totalPages}
+                Page {currentPage} sur {totalPages}
               </span>
               <Button
                 variant="outline"
@@ -201,7 +201,7 @@ export function BaseList<T extends { _id: string }>({
                 onClick={() => setPage(page + 1)}
                 disabled={currentPage === totalPages || totalPages === 0}
               >
-                Next
+                Suivant
               </Button>
             </div>
           </div>

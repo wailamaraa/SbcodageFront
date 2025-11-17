@@ -1,13 +1,28 @@
-import { BaseApiService } from './base';
-import { Reparation, ReparationItem, ReparationService } from '../../types';
+import { BaseApiService, ApiResponse, QueryParams } from './base';
+import { Reparation } from '../../types';
 import api from '../../utils/api';
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-  errors?: Array<{ field: string; message: string }>;
-  status?: number;
+interface CreateReparationData {
+  car: string;
+  description: string;
+  items?: Array<{ item: string; quantity: number }>;
+  services?: Array<{ service: string; notes?: string }>;
+  technician?: string;
+  laborCost?: number;
+  notes?: string;
+}
+
+interface UpdateReparationData {
+  status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  endDate?: string;
+}
+
+interface ReparationQueryParams extends QueryParams {
+  car?: string;
+  status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  technician?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 class ReparationsApiService extends BaseApiService<Reparation> {
@@ -18,58 +33,31 @@ class ReparationsApiService extends BaseApiService<Reparation> {
     this.api = api;
   }
 
-  async updateStatus(id: string, status: Reparation['status']) {
+  async getAll(params: ReparationQueryParams = {}): Promise<ApiResponse<Reparation[]>> {
+    return super.getAll(params);
+  }
+
+  async getById(id: string): Promise<ApiResponse<Reparation>> {
+    const response = await this.api.get(`${this.endpoint}/${id}`);
+    return response.data;
+  }
+
+  async create(data: CreateReparationData | Partial<Reparation>): Promise<ApiResponse<Reparation>> {
+    const response = await api.post(this.endpoint, data);
+    return response.data;
+  }
+
+  async createReparation(data: CreateReparationData): Promise<ApiResponse<Reparation>> {
+    return this.create(data);
+  }
+
+  async update(id: string, data: UpdateReparationData | Partial<Reparation>): Promise<ApiResponse<Reparation>> {
+    const response = await api.put(`${this.endpoint}/${id}`, data);
+    return response.data;
+  }
+
+  async updateStatus(id: string, status: Reparation['status']): Promise<ApiResponse<Reparation>> {
     return this.update(id, { status });
-  }
-
-  async addItem(id: string, itemData: { item: string; quantity: number; price: number }) {
-    const reparation = await this.getById(id);
-    if (reparation.success && reparation.data) {
-      const updatedItems = [...(reparation.data.items || []), {
-        _id: '', // Will be set by the server
-        item: itemData.item,
-        quantity: itemData.quantity,
-        price: itemData.price
-      }];
-      return this.update(id, { items: updatedItems });
-    }
-    return reparation;
-  }
-
-  async removeItem(id: string, itemId: string) {
-    const reparation = await this.getById(id);
-    if (reparation.success && reparation.data) {
-      const updatedItems = reparation.data.items.filter((item: ReparationItem) =>
-        typeof item.item === 'string' ? item.item !== itemId : item.item._id !== itemId
-      );
-      return this.update(id, { items: updatedItems });
-    }
-    return reparation;
-  }
-
-  async addService(id: string, serviceData: { service: string; notes?: string }) {
-    const reparation = await this.getById(id);
-    if (reparation.success && reparation.data) {
-      const updatedServices = [...(reparation.data.services || []), {
-        _id: '', // Will be set by the server
-        service: serviceData.service,
-        price: 0, // Will be set by the server
-        notes: serviceData.notes || ''
-      }];
-      return this.update(id, { services: updatedServices });
-    }
-    return reparation;
-  }
-
-  async removeService(id: string, serviceId: string) {
-    const reparation = await this.getById(id);
-    if (reparation.success && reparation.data) {
-      const updatedServices = reparation.data.services.filter((service) =>
-        typeof service.service === 'string' ? service.service !== serviceId : service.service._id !== serviceId
-      );
-      return this.update(id, { services: updatedServices });
-    }
-    return reparation;
   }
 
   async updateFull(id: string, data: {
@@ -87,10 +75,7 @@ class ReparationsApiService extends BaseApiService<Reparation> {
       console.log('With data:', data);
 
       const response = await this.api.put<ApiResponse<Reparation>>(url, data);
-      return {
-        ...response.data,
-        status: response.status
-      };
+      return response.data;
     } catch (error: any) {
       console.error('Error in updateFull:', error);
       return {

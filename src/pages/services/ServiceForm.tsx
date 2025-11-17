@@ -17,27 +17,13 @@ const DEFAULT_FORM_DATA: Partial<Service> = {
   status: 'active'
 };
 
-interface ServiceFormProps {
-  isEditing?: boolean;
-}
-
-const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
+const ServiceForm: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  console.log('ServiceForm rendered with id:', id);
+  const [formData, setFormData] = useState<Partial<Service>>(DEFAULT_FORM_DATA);
   const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    handleInputChange: useFormHandleInputChange,
-  } = useForm<Service>({
-    service: servicesApi,
-    basePath: '/services',
-    id: undefined,
-    initialData: DEFAULT_FORM_DATA
-  });
-
-  console.log('useForm hook initialized (for input change handling).');
+  console.log('ServiceForm rendered with id:', id);
 
   useEffect(() => {
     console.log('useEffect triggered for fetching data. id:', id);
@@ -46,18 +32,18 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
       console.log('Fetching service data for editing...');
       servicesApi.getById(id).then(response => {
         console.log('API Response for getById:', response);
-        if (response) {
+        if (response && response.success && response.data) {
           console.log('Setting form data with fetched response...');
-          setFormData(response);
+          setFormData(response.data);
           console.log('Form data set.');
         } else {
           console.error('Failed to fetch service data: No response data');
-          toast.error('Failed to load service data');
+          toast.error('Échec du chargement des données du service');
           navigate('/services');
         }
       }).catch(error => {
         console.error('Error fetching service data:', error);
-        toast.error('Failed to load service data');
+        toast.error('Échec du chargement des données du service');
         navigate('/services');
       }).finally(() => {
         setIsLoading(false);
@@ -69,7 +55,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: Partial<Service>) => ({
       ...prev,
       [name]: type === 'number' ? Number(value) : value,
     }));
@@ -93,19 +79,19 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
       console.log('API Response for submission:', response);
 
       if (response && !response.errors) {
-        toast.success(`Service ${id ? 'updated' : 'created'} successfully!`);
+        toast.success(`Service ${id ? 'mis à jour' : 'créé'} avec succès !`);
         navigate('/services');
       } else {
         console.error(`Failed to ${id ? 'update' : 'create'} service:`, response?.message || response?.errors);
         if (response?.errors && Array.isArray(response.errors)) {
           response.errors.forEach((error: any) => toast.error(`${error.field}: ${error.message}`));
         } else {
-          toast.error(response?.message || `Failed to ${id ? 'update' : 'create'} service.`);
+          toast.error(response?.message || `Échec de ${id ? 'la mise à jour' : 'la création'} du service.`);
         }
       }
     } catch (error) {
       console.error('Error during form submission:', error);
-      toast.error(`An error occurred while ${id ? 'updating' : 'creating'} the service.`);
+      toast.error(`Une erreur s'est produite lors de ${id ? 'la mise à jour' : 'la création'} du service.`);
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +101,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
 
   return (
     <BaseForm
-      title={id ? 'Edit Service' : 'New Service'}
+      title={id ? 'Modifier le Service' : 'Nouveau Service'}
       basePath="/services"
       isLoading={isLoading}
       onSubmit={handleSubmit}
@@ -123,12 +109,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
       <div className="space-y-4">
         <div>
           <Input
-            label="Name"
+            label="Nom"
             name="name"
             value={formData.name || ''}
             onChange={handleInputChange}
             required
-            placeholder="Enter service name"
+            placeholder="Entrez le nom du service"
           />
         </div>
 
@@ -138,7 +124,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
             name="description"
             value={formData.description || ''}
             onChange={handleInputChange}
-            placeholder="Enter service description"
+            placeholder="Entrez la description du service"
             rows={4}
           />
         </div>
@@ -146,13 +132,13 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Input
-              label="Price"
+              label="Prix"
               name="price"
               type="number"
               value={formData.price || ''}
               onChange={handleInputChange}
               required
-              placeholder="Enter service price"
+              placeholder="Entrez le prix du service"
               min={0}
               step={0.01}
             />
@@ -160,13 +146,13 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
 
           <div>
             <Input
-              label="Duration (hours)"
+              label="Durée (heures)"
               name="duration"
               type="number"
               value={formData.duration || ''}
               onChange={handleInputChange}
               required
-              placeholder="Enter service duration"
+              placeholder="Entrez la durée du service"
               min={0}
               step={0.5}
             />
@@ -176,31 +162,31 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ isEditing }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Select
-              label="Category"
+              label="Catégorie"
               name="category"
               value={formData.category || ''}
               onChange={handleInputChange}
               required
               options={[
                 { value: 'maintenance', label: 'Maintenance' },
-                { value: 'repair', label: 'Repair' },
+                { value: 'repair', label: 'Réparation' },
                 { value: 'diagnostic', label: 'Diagnostic' },
-                { value: 'bodywork', label: 'Bodywork' },
-                { value: 'other', label: 'Other' }
+                { value: 'bodywork', label: 'Carrosserie' },
+                { value: 'other', label: 'Autre' }
               ]}
             />
           </div>
 
           <div>
             <Select
-              label="Status"
+              label="Statut"
               name="status"
               value={formData.status || ''}
               onChange={handleInputChange}
               required
               options={[
-                { value: 'active', label: 'Active' },
-                { value: 'inactive', label: 'Inactive' }
+                { value: 'active', label: 'Actif' },
+                { value: 'inactive', label: 'Inactif' }
               ]}
             />
           </div>

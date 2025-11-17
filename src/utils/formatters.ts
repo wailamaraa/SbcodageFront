@@ -8,7 +8,7 @@ export const formatCurrency = (amount: number): string => {
 
 // Format date
 export const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('en-US', {
+  return new Date(dateString).toLocaleDateString('fr-FR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -17,7 +17,7 @@ export const formatDate = (dateString: string): string => {
 
 // Format date with time
 export const formatDateTime = (dateString: string): string => {
-  return new Date(dateString).toLocaleString('en-US', {
+  return new Date(dateString).toLocaleString('fr-FR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -30,15 +30,15 @@ export const formatDateTime = (dateString: string): string => {
 export const getStockStatusInfo = (status: string): { label: string; color: string } => {
   switch (status) {
     case 'available':
-      return { label: 'Available', color: 'success' };
+      return { label: 'Disponible', color: 'success' };
     case 'low_stock':
-      return { label: 'Low Stock', color: 'warning' };
+      return { label: 'Stock Faible', color: 'warning' };
     case 'out_of_stock':
-      return { label: 'Out of Stock', color: 'danger' };
+      return { label: 'Rupture de Stock', color: 'danger' };
     case 'used':
-      return { label: 'Used', color: 'secondary' };
+      return { label: 'Utilisé', color: 'secondary' };
     default:
-      return { label: 'Unknown', color: 'secondary' };
+      return { label: 'Inconnu', color: 'secondary' };
   }
 };
 
@@ -46,14 +46,14 @@ export const getStockStatusInfo = (status: string): { label: string; color: stri
 export const getRepairStatusInfo = (status: string): { label: string; color: string } => {
   switch (status) {
     case 'pending':
-      return { label: 'Pending', color: 'warning' };
+      return { label: 'En Attente', color: 'warning' };
     case 'in_progress':
-      return { label: 'In Progress', color: 'primary' };
+      return { label: 'En Cours', color: 'primary' };
     case 'completed':
-      return { label: 'Completed', color: 'success' };
+      return { label: 'Terminé', color: 'success' };
     case 'cancelled':
-      return { label: 'Cancelled', color: 'danger' };
+      return { label: 'Annulé', color: 'danger' };
     default:
-      return { label: 'Unknown', color: 'secondary' };
+      return { label: 'Inconnu', color: 'secondary' };
   }
 };

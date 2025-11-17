@@ -14,27 +14,27 @@ const VehicleList: React.FC = () => {
 
   const columns = [
     {
-      header: 'Make',
+      header: 'Marque',
       accessor: 'make'
     },
     {
-      header: 'Model',
+      header: 'Modèle',
       accessor: 'model'
     },
     {
-      header: 'Year',
+      header: 'Année',
       accessor: 'year'
     },
     {
-      header: 'Owner',
+      header: 'Propriétaire',
       accessor: 'owner.name',
-      cell: (row: Car) => row.owner?.name || 'N/A'
+      cell: (row: Car) => row.owner?.name || 'N/D'
     }
   ];
 
   return (
     <BaseList
-      title="Vehicles"
+      title="Véhicules"
       data={data}
       columns={columns}
       isLoading={isLoading}

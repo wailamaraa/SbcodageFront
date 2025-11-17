@@ -30,7 +30,7 @@ const LowStockAlerts: React.FC<LowStockAlertsProps> = ({
           setLowStockItems(response.data.slice(0, maxItems));
         }
       } catch (err) {
-        setError('Failed to load low stock items');
+        setError('Échec du chargement des articles en stock faible');
         console.error('Error fetching low stock items:', err);
       } finally {
         setLoading(false);
@@ -72,14 +72,14 @@ const LowStockAlerts: React.FC<LowStockAlertsProps> = ({
         <div className="flex items-center gap-2 mb-4">
           <Package size={20} className="text-green-600 dark:text-green-400" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Stock Status
+            État du Stock
           </h3>
         </div>
         <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
           <div className="text-center">
             <Package size={48} className="mx-auto mb-2 text-green-600 dark:text-green-400" />
-            <p className="font-medium">All items are well stocked!</p>
-            <p className="text-sm">No low stock alerts at this time</p>
+            <p className="font-medium">Tous les articles sont bien approvisionnés !</p>
+            <p className="text-sm">Aucune alerte de stock faible pour le moment</p>
           </div>
         </div>
       </div>
@@ -93,7 +93,7 @@ const LowStockAlerts: React.FC<LowStockAlertsProps> = ({
           <div className="flex items-center gap-2">
             <AlertTriangle size={20} className="text-orange-600 dark:text-orange-400" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Low Stock Alerts
+              Alertes de Stock Faible
             </h3>
             <Badge variant="danger">{lowStockItems.length}</Badge>
           </div>
@@ -104,7 +104,7 @@ const LowStockAlerts: React.FC<LowStockAlertsProps> = ({
               onClick={() => navigate('/inventory?status=low_stock,out_of_stock')}
               className="flex items-center gap-1"
             >
-              View All
+              Voir Tout
               <ExternalLink size={14} />
             </Button>
           )}
@@ -131,7 +131,7 @@ const LowStockAlerts: React.FC<LowStockAlertsProps> = ({
                       {item.name}
                     </h4>
                     <Badge variant={isOutOfStock ? 'danger' : 'warning'}>
-                      {isOutOfStock ? 'Out of Stock' : 'Low Stock'}
+                      {isOutOfStock ? 'Rupture de Stock' : 'Stock Faible'}
                     </Badge>
                   </div>
                   
@@ -139,11 +139,11 @@ const LowStockAlerts: React.FC<LowStockAlertsProps> = ({
                     <div className="flex items-center gap-1">
                       <TrendingDown size={14} />
                       <span>
-                        <span className="font-semibold">{item.quantity}</span> / {item.threshold} units
+                        <span className="font-semibold">{item.quantity}</span> / {item.threshold} unités
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Sell: </span>
+                      <span className="text-gray-500">Vente: </span>
                       <span className="font-medium">{formatCurrency(item.sellPrice || item.price || 0)}</span>
                     </div>
                   </div>
@@ -169,7 +169,7 @@ const LowStockAlerts: React.FC<LowStockAlertsProps> = ({
                   </div>
                   {typeof item.fournisseur === 'object' && item.fournisseur?.name && (
                     <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      Supplier: {item.fournisseur.name}
+                      Fournisseur: {item.fournisseur.name}
                     </div>
                   )}
                 </div>
@@ -186,7 +186,7 @@ const LowStockAlerts: React.FC<LowStockAlertsProps> = ({
             className="w-full"
             onClick={() => navigate('/inventory?status=low_stock,out_of_stock')}
           >
-            View All Low Stock Items
+            Voir Tous les Articles en Stock Faible
           </Button>
         </div>
       )}

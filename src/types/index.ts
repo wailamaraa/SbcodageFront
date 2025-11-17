@@ -28,7 +28,12 @@ export interface Supplier {
   _id: string;
   name: string;
   email?: string;
+  contactPerson?: string;
   phone?: string;
+  address?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Vehicle {
@@ -71,14 +76,15 @@ export interface Car {
   make: string;
   model: string;
   year: number;
-  licensePlate: string;
+  licensePlate?: string;
   vin?: string;
-  status: 'active' | 'inactive';
+  status?: 'active' | 'inactive';
   owner: {
     name: string;
-    email: string;
+    email?: string;
     phone?: string;
   };
+  notes?: string;
   lastService?: Date;
   nextService?: Date;
   createdAt: Date;
@@ -153,6 +159,7 @@ export interface Service {
   duration: number;
   category: 'maintenance' | 'repair' | 'diagnostic' | 'bodywork' | 'other';
   status: 'active' | 'inactive';
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }

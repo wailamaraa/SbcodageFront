@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Package, AlertCircle, Truck, Tag, Car, Wrench, TrendingUp, ArrowUp, ArrowDown, DollarSign } from 'lucide-react';
-import { DashboardStats } from '../../types';
+import { dashboardApi } from '../../services/api/dashboard';
 import Card from '../../components/ui/Card';
 import DashboardFilters from '../../components/ui/DashboardFilters';
 import LowStockAlerts from '../../components/common/LowStockAlerts';
@@ -32,8 +31,35 @@ ChartJS.register(
   LineElement
 );
 
+interface DashboardData {
+  counts: {
+    items: number;
+    fournisseurs: number;
+    categories: number;
+    cars: number;
+    reparations: number;
+  };
+  inventory: {
+    value: number;
+    lowStock: number;
+    outOfStock: number;
+  };
+  repairs: {
+    active: number;
+    completed: number;
+    revenue: number;
+    dateDebut: string | null;
+    dateFin: string | null;
+  };
+  topItems: Array<{
+    _id: string;
+    name: string;
+    quantity: number;
+  }>;
+}
+
 const Dashboard: React.FC = () => {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -50,8 +76,12 @@ const Dashboard: React.FC = () => {
         params.dateFin = endDate.toISOString().split('T')[0];
       }
 
-      const dashboardResponse = await axios.get('https://sbcodageback.onrender.com/api/dashboard', { params });
-      setStats(dashboardResponse.data.data);
+      const response = await dashboardApi.getStats(params);
+      if (response.success && response.data) {
+        setStats(response.data);
+      } else {
+        setError('Failed to load dashboard data');
+      }
     } catch (err) {
       setError('Failed to load dashboard data');
       console.error('Dashboard error:', err);
@@ -80,18 +110,18 @@ const Dashboard: React.FC = () => {
   if (error || !stats) {
     return (
       <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
-        <p>{error || 'Failed to load dashboard data'}</p>
+        <p>{error || 'Échec du chargement des données du tableau de bord'}</p>
       </div>
     );
   }
 
   // Prepare data for bar chart
   const topItemsData = {
-    labels: stats.topItems.map(item => item.name),
+    labels: stats.topItems.map((item: { name: string }) => item.name),
     datasets: [
       {
-        label: 'Quantity Used',
-        data: stats.topItems.map(item => item.quantity),
+        label: 'Quantité Utilisée',
+        data: stats.topItems.map((item: { quantity: number }) => item.quantity),
         backgroundColor: 'rgba(59, 130, 246, 0.7)',
         borderColor: 'rgb(59, 130, 246)',
         borderWidth: 1,
@@ -102,7 +132,7 @@ const Dashboard: React.FC = () => {
 
   // Prepare data for inventory status pie chart
   const inventoryStatusData = {
-    labels: ['Available', 'Low Stock', 'Out of Stock'],
+    labels: ['Disponible', 'Stock Faible', 'Rupture de Stock'],
     datasets: [
       {
         data: [
@@ -129,7 +159,7 @@ const Dashboard: React.FC = () => {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-          Dashboard Overview
+          Vue d'Ensemble du Tableau de Bord
         </h1>
         <DashboardFilters
           startDate={startDate}
@@ -154,7 +184,7 @@ const Dashboard: React.FC = () => {
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(stats.inventory.value || 0)}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Inventory Value</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Valeur Totale de l'Inventaire</p>
             </div>
           </div>
         </Card>
@@ -173,7 +203,7 @@ const Dashboard: React.FC = () => {
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {stats.inventory.lowStock}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Low Stock Items</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Articles en Stock Faible</p>
             </div>
           </div>
         </Card>
@@ -192,7 +222,7 @@ const Dashboard: React.FC = () => {
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {stats.repairs.active}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Active Repairs</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Réparations Actives</p>
             </div>
           </div>
         </Card>
@@ -211,7 +241,7 @@ const Dashboard: React.FC = () => {
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(stats.repairs.revenue || 0)}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Monthly Revenue</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Chiffre d'Affaires Mensuel</p>
             </div>
           </div>
         </Card>
@@ -223,7 +253,7 @@ const Dashboard: React.FC = () => {
           <div className="p-4">
             <div className="flex items-center">
               <Package className="h-5 w-5 text-blue-600 dark:text-blue-300" />
-              <span className="ml-2 text-sm font-medium text-blue-600 dark:text-blue-300">Items</span>
+              <span className="ml-2 text-sm font-medium text-blue-600 dark:text-blue-300">Articles</span>
             </div>
             <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{stats.counts.items}</h3>
           </div>
@@ -233,7 +263,7 @@ const Dashboard: React.FC = () => {
           <div className="p-4">
             <div className="flex items-center">
               <Truck className="h-5 w-5 text-green-600 dark:text-green-300" />
-              <span className="ml-2 text-sm font-medium text-green-600 dark:text-green-300">Suppliers</span>
+              <span className="ml-2 text-sm font-medium text-green-600 dark:text-green-300">Fournisseurs</span>
             </div>
             <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{stats.counts.fournisseurs}</h3>
           </div>
@@ -243,7 +273,7 @@ const Dashboard: React.FC = () => {
           <div className="p-4">
             <div className="flex items-center">
               <Tag className="h-5 w-5 text-purple-600 dark:text-purple-300" />
-              <span className="ml-2 text-sm font-medium text-purple-600 dark:text-purple-300">Categories</span>
+              <span className="ml-2 text-sm font-medium text-purple-600 dark:text-purple-300">Catégories</span>
             </div>
             <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{stats.counts.categories}</h3>
           </div>
@@ -253,7 +283,7 @@ const Dashboard: React.FC = () => {
           <div className="p-4">
             <div className="flex items-center">
               <Car className="h-5 w-5 text-amber-600 dark:text-amber-300" />
-              <span className="ml-2 text-sm font-medium text-amber-600 dark:text-amber-300">Vehicles</span>
+              <span className="ml-2 text-sm font-medium text-amber-600 dark:text-amber-300">Véhicules</span>
             </div>
             <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{stats.counts.cars}</h3>
           </div>
@@ -263,7 +293,7 @@ const Dashboard: React.FC = () => {
           <div className="p-4">
             <div className="flex items-center">
               <Wrench className="h-5 w-5 text-red-600 dark:text-red-300" />
-              <span className="ml-2 text-sm font-medium text-red-600 dark:text-red-300">Repairs</span>
+              <span className="ml-2 text-sm font-medium text-red-600 dark:text-red-300">Réparations</span>
             </div>
             <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{stats.counts.reparations}</h3>
           </div>
@@ -283,28 +313,28 @@ const Dashboard: React.FC = () => {
               <div className="p-2 rounded-full bg-green-600 dark:bg-green-500">
                 <DollarSign className="h-5 w-5 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Profit Metrics</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Métriques de Profit</h3>
             </div>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Revenue</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Chiffre d'Affaires Mensuel</p>
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                   {formatCurrency(stats.repairs.revenue || 0)}
                 </p>
               </div>
               <div className="pt-4 border-t border-green-200 dark:border-green-700">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Inventory Value</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Valeur de l'Inventaire</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatCurrency(stats.inventory.value || 0)}
                 </p>
               </div>
               <div className="pt-4 border-t border-green-200 dark:border-green-700">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Active Repairs</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Réparations Actives</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.repairs.active}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {stats.repairs.completedLastMonth} completed last month
+                  {stats.repairs.completed} réparations terminées
                 </p>
               </div>
             </div>
@@ -316,7 +346,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="transform transition-all duration-300 hover:shadow-lg">
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Used Items</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Articles les Plus Utilisés</h3>
             <div className="h-80">
               <Bar
                 data={topItemsData}
@@ -348,7 +378,7 @@ const Dashboard: React.FC = () => {
 
         <Card className="transform transition-all duration-300 hover:shadow-lg">
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Inventory Status</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">État de l'Inventaire</h3>
             <div className="h-80 flex items-center justify-center">
               <div className="w-2/3 h-2/3">
                 <Pie

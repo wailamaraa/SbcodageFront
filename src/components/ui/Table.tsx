@@ -26,7 +26,7 @@ const Table = <T extends {}>({
   onRowClick,
   onDeleteClick,
   className = '',
-  emptyMessage = 'No data available'
+  emptyMessage = 'Aucune donnée disponible'
 }: TableProps<T>) => {
   if (isLoading) {
     return (

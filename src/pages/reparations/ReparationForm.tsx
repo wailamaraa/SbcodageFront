@@ -722,7 +722,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
 
   return (
     <BaseForm
-      title={id ? 'Edit Reparation' : 'New Reparation'}
+      title={id ? 'Modifier la Réparation' : 'Nouvelle Réparation'}
       basePath="/reparations"
       isLoading={loading || isSubmitting}
       onSubmit={handleSubmit}
@@ -732,10 +732,10 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
           <div className="flex items-center gap-2 mb-4">
             <Car size={20} className="text-gray-400" />
-            <h3 className="text-lg font-medium">Vehicle Information</h3>
+            <h3 className="text-lg font-medium">Informations du Véhicule</h3>
           </div>
           <Select
-            label="Select Vehicle"
+            label="Sélectionner le Véhicule"
             name="car"
             value={typeof formData.car === 'string' ? formData.car : formData.car?._id || ''}
             onChange={handleInputChange}
@@ -749,20 +749,20 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
           <div className="flex items-center gap-2 mb-4">
             <User size={20} className="text-gray-400" />
-            <h3 className="text-lg font-medium">Basic Information</h3>
+            <h3 className="text-lg font-medium">Informations de Base</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Technician"
+              label="Technicien"
               name="technician"
               value={formData.technician}
               onChange={handleInputChange}
               required
-              placeholder="Enter technician name"
+              placeholder="Entrez le nom du technicien"
             />
 
             <Input
-              label="Labor Cost"
+              label="Coût de la Main-d'œuvre"
               name="laborCost"
               type="number"
               value={formData.laborCost}
@@ -770,7 +770,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
               required
               min={0}
               step={0.01}
-              placeholder="Enter labor cost"
+              placeholder="Entrez le coût de la main-d'œuvre"
             />
           </div>
 
@@ -781,7 +781,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
               value={formData.description}
               onChange={handleInputChange}
               required
-              placeholder="Enter repair description"
+              placeholder="Entrez la description de la réparation"
               rows={3}
             />
           </div>
@@ -792,7 +792,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <Package size={20} className="text-gray-400" />
-              <h3 className="text-lg font-medium">Parts & Items</h3>
+              <h3 className="text-lg font-medium">Pièces et Articles</h3>
             </div>
             <Button
               variant="outline"
@@ -800,7 +800,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
               onClick={handleAddItem}
             >
               <Plus size={16} className="mr-2" />
-              Add Item
+              Ajouter un Article
             </Button>
           </div>
           <div className="space-y-4">
@@ -808,7 +808,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
               <div key={index} className="flex gap-4 items-start bg-white dark:bg-gray-700 p-4 rounded-md">
                 <div className="flex-grow">
                   <Select
-                    label="Item"
+                    label="Article"
                     value={typeof item.item === 'string' ? item.item : item.item?._id || ''}
                     onChange={(e) => handleItemChange(index, 'item', e.target.value)}
                     required
@@ -817,7 +817,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
                 </div>
                 <div className="w-32">
                   <Input
-                    label="Quantity"
+                    label="Quantité"
                     type="number"
                     value={item.quantity}
                     onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
@@ -837,7 +837,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
             ))}
             {(formData.items || []).length === 0 && (
               <div className="text-center py-4 text-gray-500">
-                No items added. Click "Add Item" to start adding parts.
+                Aucun article ajouté. Cliquez sur "Ajouter un Article" pour commencer à ajouter des pièces.
               </div>
             )}
           </div>
@@ -856,7 +856,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
               onClick={handleAddService}
             >
               <Plus size={16} className="mr-2" />
-              Add Service
+              Ajouter un Service
             </Button>
           </div>
           <div className="space-y-4">
@@ -876,7 +876,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
                     label="Notes"
                     value={service.notes}
                     onChange={(e) => handleServiceChange(index, 'notes', e.target.value)}
-                    placeholder="Service notes (optional)"
+                    placeholder="Notes de service (optionnel)"
                   />
                 </div>
                 <Button
@@ -891,7 +891,7 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
             ))}
             {(formData.services || []).length === 0 && (
               <div className="text-center py-4 text-gray-500">
-                No services added. Click "Add Service" to start adding services.
+                Aucun service ajouté. Cliquez sur "Ajouter un Service" pour commencer à ajouter des services.
               </div>
             )}
           </div>
@@ -901,29 +901,29 @@ const ReparationForm: React.FC<ReparationFormProps> = ({ isEditing = false }) =>
         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
           <div className="flex items-center gap-2 mb-4">
             <FileText size={20} className="text-gray-400" />
-            <h3 className="text-lg font-medium">Additional Information</h3>
+            <h3 className="text-lg font-medium">Informations Supplémentaires</h3>
           </div>
           <div className="space-y-4">
             <TextArea
-              label="Additional Notes"
+              label="Notes Supplémentaires"
               name="notes"
               value={formData.notes}
               onChange={handleInputChange}
-              placeholder="Enter any additional notes"
+              placeholder="Entrez des notes supplémentaires"
               rows={3}
             />
 
             <Select
-              label="Status"
+              label="Statut"
               name="status"
               value={formData.status}
               onChange={handleInputChange}
               required
               options={[
-                { value: 'pending', label: 'Pending' },
-                { value: 'in_progress', label: 'Working' },
-                { value: 'completed', label: 'Finished' },
-                { value: 'cancelled', label: 'Cancelled' }
+                { value: 'pending', label: 'En Attente' },
+                { value: 'in_progress', label: 'En Cours' },
+                { value: 'completed', label: 'Terminé' },
+                { value: 'cancelled', label: 'Annulé' }
               ]}
             />
           </div>

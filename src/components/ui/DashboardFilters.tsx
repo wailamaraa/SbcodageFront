@@ -16,7 +16,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     <div className="flex items-center space-x-4">
       <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
         <Calendar className="h-5 w-5" />
-        <span className="font-medium">Date Range</span>
+        <span className="font-medium">Plage de Dates</span>
       </div>
 
       <div className="flex items-center space-x-2">
@@ -29,11 +29,11 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
               const date = e.target.value ? new Date(e.target.value) : null;
               onDateChange(date, endDate);
             }}
-            placeholder="Start Date"
+            placeholder="Date de Début"
           />
         </div>
 
-        <span className="text-gray-500 dark:text-gray-400">to</span>
+        <span className="text-gray-500 dark:text-gray-400">à</span>
 
         <div className="relative">
           <input
@@ -44,7 +44,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
               const date = e.target.value ? new Date(e.target.value) : null;
               onDateChange(startDate, date);
             }}
-            placeholder="End Date"
+            placeholder="Date de Fin"
           />
         </div>
       </div>

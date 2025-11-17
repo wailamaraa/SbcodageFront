@@ -34,7 +34,7 @@ export function BaseDetails<T extends { _id: string }>({
             onClick={() => navigate(basePath)}
             icon={<ArrowLeft size={20} />}
           >
-            Back
+            Retour
           </Button>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
         </div>
@@ -46,7 +46,7 @@ export function BaseDetails<T extends { _id: string }>({
             icon={<Edit size={20} />}
             disabled={isLoading}
           >
-            Edit
+            Modifier
           </Button>
           {onDelete && (
             <Button
@@ -55,7 +55,7 @@ export function BaseDetails<T extends { _id: string }>({
               icon={<Trash2 size={20} />}
               disabled={isLoading}
             >
-              Delete
+              Supprimer
             </Button>
           )}
         </div>

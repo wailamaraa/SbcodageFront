@@ -19,74 +19,74 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, toggleSidebar, isOpen }) =>
 
   const navItems = [
     {
-      name: 'Dashboard',
+      name: 'Tableau de Bord',
       path: '/dashboard',
       icon: <Home size={20} />,
-      description: 'Overview and analytics'
+      description: 'Vue d\'ensemble et analyses'
     },
     {
-      name: 'Inventory',
+      name: 'Inventaire',
       path: '/inventory',
       icon: <Package size={20} />,
-      description: 'Manage stock items'
+      description: 'Gérer les articles en stock'
     },
     {
-      name: 'Categories',
+      name: 'Catégories',
       path: '/categories',
       icon: <Tag size={20} />,
-      description: 'Item categories'
+      description: 'Catégories d\'articles'
     },
     {
-      name: 'Suppliers',
+      name: 'Fournisseurs',
       path: '/suppliers',
       icon: <Truck size={20} />,
-      description: 'Manage suppliers'
+      description: 'Gérer les fournisseurs'
     },
     {
-      name: 'Vehicles',
+      name: 'Véhicules',
       path: '/vehicles',
       icon: <Car size={20} />,
-      description: 'Customer vehicles'
+      description: 'Véhicules des clients'
     },
     {
-      name: 'Reparations',
+      name: 'Réparations',
       path: '/reparations',
       icon: <Wrench size={20} />,
-      description: 'Repair orders'
+      description: 'Ordres de réparation'
     },
     {
       name: 'Services',
       path: '/services',
       icon: <Cog size={20} />,
-      description: 'Available services'
+      description: 'Services disponibles'
     },
     {
-      name: 'Stock Transactions',
+      name: 'Transactions de Stock',
       path: '/stock-transactions',
       icon: <History size={20} />,
-      description: 'Transaction history'
+      description: 'Historique des transactions'
     },
     {
-      name: 'Reports',
+      name: 'Rapports',
       path: '/reports',
       icon: <BarChart3 size={20} />,
-      description: 'Analytics & reports'
+      description: 'Analyses et rapports'
     },
   ];
 
   if (isAdmin) {
     navItems.push(
       {
-        name: 'Users',
+        name: 'Utilisateurs',
         path: '/users',
         icon: <Users size={20} />,
-        description: 'Manage users'
+        description: 'Gérer les utilisateurs'
       },
       {
-        name: 'Settings',
+        name: 'Paramètres',
         path: '/settings',
         icon: <Settings size={20} />,
-        description: 'System settings'
+        description: 'Paramètres système'
       }
     );
   }
@@ -181,16 +181,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, toggleSidebar, isOpen }) =>
               </div>
               <div className="ml-3 flex-1">
                 <p className="text-sm font-medium text-slate-900 dark:text-white">
-                  {user?.name || 'Loading...'}
+                  {user?.name || 'Chargement...'}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {user?.role || 'Loading...'}
+                  {user?.role === 'admin' ? 'Administrateur' : user?.role === 'user' ? 'Utilisateur' : 'Chargement...'}
                 </p>
               </div>
               <button
                 onClick={logout}
                 className="p-2 rounded-lg text-slate-400 hover:text-sky-500 hover:bg-sky-50 transition-colors duration-200"
-                title="Logout"
+                title="Déconnexion"
               >
                 <LogOut size={20} />
               </button>

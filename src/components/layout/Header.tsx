@@ -21,7 +21,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, title }) => {
                 className="md:hidden p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
                 onClick={toggleSidebar}
               >
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">Ouvrir le menu</span>
                 <Menu className="h-6 w-6" />
               </button>
               <h1 className="ml-2 md:ml-0 text-xl font-semibold text-gray-900 dark:text-white">

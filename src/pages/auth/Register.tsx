@@ -41,12 +41,12 @@ const Register: React.FC = () => {
             <UserPlus className="h-12 w-12 text-blue-500" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Create a new account
+            Créer un nouveau compte
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Or{' '}
+            Ou{' '}
             <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
-              sign in to your existing account
+              connectez-vous à votre compte existant
             </Link>
           </p>
         </div>
@@ -59,53 +59,53 @@ const Register: React.FC = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <Input
-            label="Full Name"
+            label="Nom Complet"
             autoComplete="name"
             {...register('name', {
-              required: 'Name is required',
+              required: 'Le nom est requis',
               minLength: {
                 value: 2,
-                message: 'Name must be at least 2 characters'
+                message: 'Le nom doit contenir au moins 2 caractères'
               }
             })}
             error={errors.name?.message}
           />
 
           <Input
-            label="Email Address"
+            label="Adresse Email"
             type="email"
             autoComplete="email"
             {...register('email', {
-              required: 'Email is required',
+              required: 'L\'email est requis',
               pattern: {
                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: 'Invalid email address'
+                message: 'Adresse email invalide'
               }
             })}
             error={errors.email?.message}
           />
 
           <Input
-            label="Password"
+            label="Mot de Passe"
             type="password"
             {...register('password', {
-              required: 'Password is required',
+              required: 'Le mot de passe est requis',
               minLength: {
                 value: 6,
-                message: 'Password must be at least 6 characters'
+                message: 'Le mot de passe doit contenir au moins 6 caractères'
               }
             })}
             error={errors.password?.message}
           />
 
           <Input
-            label="Confirm Password"
+            label="Confirmer le Mot de Passe"
             type="password"
             {...register('confirmPassword', {
-              required: 'Please confirm your password',
+              required: 'Veuillez confirmer votre mot de passe',
               validate: (val: string) => {
                 if (watch('password') !== val) {
-                  return "Passwords do not match";
+                  return "Les mots de passe ne correspondent pas";
                 }
               }
             })}
@@ -120,7 +120,7 @@ const Register: React.FC = () => {
               className="w-full"
               isLoading={isLoading}
             >
-              Create Account
+              Créer le Compte
             </Button>
           </div>
         </form>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -35,13 +34,14 @@ import CarDetails from './pages/vehicles/CarDetails';
 import CarForm from './pages/vehicles/CarForm';
 
 // User Management
-// TODO: Create user management pages
-// import UsersList from './pages/users/UsersList';
-// import UserDetails from './pages/users/UserDetails';
-// import UserForm from './pages/users/UserForm';
+import UsersList from './pages/users/UsersList';
+import UserDetails from './pages/users/UserDetails';
+import UserForm from './pages/users/UserForm';
 
 // Stock Transactions
 import StockTransactionsList from './pages/stock-transactions/StockTransactionsList';
+import StockTransactionDetails from './pages/stock-transactions/StockTransactionDetails';
+import StockTransactionForm from './pages/stock-transactions/StockTransactionForm';
 
 // Services & Repairs
 import ServicesList from './pages/services/ServicesList';
@@ -115,7 +115,7 @@ function App() {
             <Route path="/categories/edit/:id" element={
               <ProtectedRoute>
                 <Layout>
-                  <CategoryForm isEditing />
+                  <CategoryForm />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -145,7 +145,7 @@ function App() {
             <Route path="/suppliers/edit/:id" element={
               <ProtectedRoute>
                 <Layout>
-                  <SupplierForm isEditing />
+                  <SupplierForm />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -175,7 +175,7 @@ function App() {
             <Route path="/inventory/edit/:id" element={
               <ProtectedRoute>
                 <Layout>
-                  <InventoryForm isEditing />
+                  <InventoryForm />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -205,7 +205,7 @@ function App() {
             <Route path="/vehicles/edit/:id" element={
               <ProtectedRoute>
                 <Layout>
-                  <CarForm isEditing />
+                  <CarForm />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -235,7 +235,7 @@ function App() {
             <Route path="/services/edit/:id" element={
               <ProtectedRoute>
                 <Layout>
-                  <ServiceForm isEditing />
+                  <ServiceForm />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -245,6 +245,20 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <StockTransactionsList />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/stock-transactions/new" element={
+              <ProtectedRoute>
+                <Layout>
+                  <StockTransactionForm />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/stock-transactions/:id" element={
+              <ProtectedRoute>
+                <Layout>
+                  <StockTransactionDetails />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -267,7 +281,7 @@ function App() {
             <Route path="/reparations/edit/:id" element={
               <ProtectedRoute>
                 <Layout>
-                  <ReparationForm isEditing />
+                  <ReparationForm />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -279,8 +293,8 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* Users Routes - TODO: Create user management pages */}
-            {/* <Route path="/users" element={
+            {/* Users Routes - Admin Only */}
+            <Route path="/users" element={
               <ProtectedRoute requireAdmin>
                 <Layout>
                   <UsersList />
@@ -304,10 +318,10 @@ function App() {
             <Route path="/users/edit/:id" element={
               <ProtectedRoute requireAdmin>
                 <Layout>
-                  <UserForm isEditing />
+                  <UserForm />
                 </Layout>
               </ProtectedRoute>
-            } /> */}
+            } />
 
             {/* 404 route */}
             <Route path="*" element={<NotFound />} />

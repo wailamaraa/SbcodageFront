@@ -29,7 +29,7 @@ export const BaseForm: React.FC<BaseFormProps> = ({
           onClick={() => navigate(basePath)}
           icon={<ArrowLeft size={20} />}
         >
-          Back
+          Retour
         </Button>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
       </div>
@@ -44,14 +44,14 @@ export const BaseForm: React.FC<BaseFormProps> = ({
               onClick={() => navigate(basePath)}
               disabled={isLoading}
             >
-              Cancel
+              Annuler
             </Button>
             <Button
               variant="primary"
               type="submit"
               isLoading={isLoading}
             >
-              Save
+              Enregistrer
             </Button>
           </div>
         </form>

@@ -3,24 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, Tag, Clock, FileText, Edit, Trash2 } from 'lucide-react';
 import { categoriesApi } from '../../services/api';
 import { Category } from '../../types';
-import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import { useCrud } from '../../hooks/useCrud';
 
-const PAGE_SIZE = 10;
-
 const CategoriesList: React.FC = () => {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('-createdAt');
-  const navigate = useNavigate();
 
   const {
     items: categories,
     total,
+    currentPage,
+    totalPages,
     isLoading,
     loadItems: loadCategories,
     deleteItem: deleteCategory
@@ -30,160 +30,202 @@ const CategoriesList: React.FC = () => {
   });
 
   useEffect(() => {
-    loadCategories({
+    const params = {
       page,
-      limit: PAGE_SIZE,
+      limit: pageSize,
       sort,
       ...(search && { search })
-    });
-  }, [loadCategories, page, search, sort]);
+    };
+    loadCategories(params);
+  }, [loadCategories, page, pageSize, search, sort]);
 
-  const columns = [
-    {
-      header: 'Name',
-      accessor: (category: Category) => (
-        <div className="flex items-center gap-2">
-          <Tag size={16} className="text-gray-400" />
-          <div className="font-medium">{category.name}</div>
-        </div>
-      ),
-      className: 'min-w-[200px]'
-    },
-    {
-      header: 'Description',
-      accessor: (category: Category) => (
-        <div className="flex items-center gap-2">
-          <FileText size={16} className="text-gray-400" />
-          <span className="line-clamp-2">{category.description || 'No description'}</span>
-        </div>
-      ),
-      className: 'min-w-[300px]'
-    },
-    {
-      header: 'Created At',
-      accessor: (category: Category) => (
-        <div className="flex items-center gap-2">
-          <Clock size={16} className="text-gray-400" />
-          <span>{new Date(category.createdAt).toLocaleDateString()}</span>
-        </div>
-      ),
-      className: 'min-w-[150px]'
-    },
-    {
-      header: 'Actions',
-      accessor: (category: Category) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/categories/edit/${category._id}`);
-            }}
-            icon={<Edit size={16} />}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteCategory(category._id);
-            }}
-            icon={<Trash2 size={16} />}
-            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-          >
-            Delete
-          </Button>
-        </div>
-      ),
-      className: 'w-[200px]'
+  // Sync page state when currentPage changes from API response
+  useEffect(() => {
+    if (currentPage !== page) {
+      setPage(currentPage);
     }
-  ];
+  }, [currentPage, page]);
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Categories</h1>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Catégories</h1>
+        <Button
+          variant="primary"
+          onClick={() => navigate('/categories/new')}
+          icon={<Plus size={20} />}
+          className="w-full sm:w-auto"
+        >
+          Nouvelle Catégorie
+        </Button>
+      </div>
+
+      {/* Filters */}
+      <Card className="p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="relative">
+            <Input
+              placeholder="Rechercher des catégories..."
+              value={search}
+              onChange={e => { setPage(1); setSearch(e.target.value); }}
+              className="pl-10"
+              icon={<Search size={20} className="text-gray-400" />}
+            />
+          </div>
+          <Select
+            value={sort}
+            onChange={e => { setPage(1); setSort(e.target.value); }}
+            options={[
+              { value: '-createdAt', label: 'Plus Récent' },
+              { value: 'createdAt', label: 'Plus Ancien' },
+              { value: 'name', label: 'Nom A-Z' },
+              { value: '-name', label: 'Nom Z-A' },
+            ]}
+            icon={<Filter size={20} className="text-gray-400" />}
+          />
+          <Select
+            value={pageSize.toString()}
+            onChange={e => { setPage(1); setPageSize(Number(e.target.value)); }}
+            options={[6, 12, 24, 48].map(size => ({ value: size.toString(), label: `${size} par page` }))}
+            icon={<Filter size={20} className="text-gray-400" />}
+          />
+        </div>
+      </Card>
+
+      {/* Categories Grid - Responsive Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {categories.map((category) => (
+          <div 
+            key={category._id} 
+            className="cursor-pointer"
+            onClick={() => navigate(`/categories/${category._id}`)}
+          >
+            <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow h-full">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <Tag size={20} className="text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white truncate">{category.name}</h3>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mb-4 flex-1">
+                {category.description ? (
+                  <div className="flex items-start gap-2">
+                    <FileText size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                      {category.description}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <FileText size={16} className="text-gray-300 dark:text-gray-600" />
+                    <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+                      No description
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Created Date */}
+              <div className="flex items-center gap-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
+                <Clock size={14} className="flex-shrink-0" />
+                <span>Created {new Date(category.createdAt).toLocaleDateString()}</span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/categories/edit/${category._id}`);
+                  }}
+                  icon={<Edit size={14} />}
+                  className="flex-1 text-xs"
+                >
+                  Modifier
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteCategory(category._id);
+                  }}
+                  icon={<Trash2 size={14} />}
+                  className="flex-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  Supprimer
+                </Button>
+              </div>
+            </Card>
+          </div>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {!isLoading && categories.length === 0 && (
+        <Card className="p-8 text-center">
+          <Tag size={48} className="mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucune catégorie trouvée</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
+            {search ? 'Essayez d\'ajuster vos termes de recherche' : 'Commencez par créer votre première catégorie'}
+          </p>
           <Button
             variant="primary"
             onClick={() => navigate('/categories/new')}
             icon={<Plus size={20} />}
           >
-            New Category
+            Créer la Première Catégorie
           </Button>
-        </div>
-      </div>
+        </Card>
+      )}
 
-      <Card className="overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <Input
-                placeholder="Search categories..."
-                value={search}
-                onChange={e => { setPage(1); setSearch(e.target.value); }}
-                className="pl-10"
-                icon={<Search size={20} className="text-gray-400" />}
-              />
-            </div>
-            <Select
-              value={sort}
-              onChange={e => { setPage(1); setSort(e.target.value); }}
-              options={[
-                { value: '-createdAt', label: 'Newest First' },
-                { value: 'createdAt', label: 'Oldest First' },
-                { value: 'name', label: 'Name A-Z' },
-                { value: '-name', label: 'Name Z-A' },
-              ]}
-              icon={<Filter size={20} className="text-gray-400" />}
-            />
-          </div>
-        </div>
-
-        <Table
-          columns={columns}
-          data={categories}
-          keyExtractor={(category) => category._id}
-          isLoading={isLoading}
-          onRowClick={(category) => navigate(`/categories/${category._id}`)}
-          className="w-full"
-          emptyMessage="No categories found"
-        />
-
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <div className="flex justify-between items-center">
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Card className="p-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {categories.length} of {total} categories
+              Affichage de {categories.length} sur {total} catégories
             </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
+                onClick={() => setPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1"
               >
-                Previous
+                Précédent
               </Button>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Page {page} of {totalPages || 1}
+              <span className="text-sm text-gray-600 dark:text-gray-400 px-2">
+                Page {currentPage} sur {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages || totalPages === 0}
+                onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="px-3 py-1"
               >
-                Next
+                Suivant
               </Button>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 };
