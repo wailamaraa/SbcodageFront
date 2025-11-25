@@ -4,10 +4,12 @@ import { generateInvoiceHTML, InvoiceData } from './invoiceTemplate';
 // Default company information - SbCodage AUTO
 const DEFAULT_COMPANY_INFO = {
   name: 'SbCodage AUTO',
-  address: 'Zone Industrielle Sidi Brahim\n20000 Casablanca, Maroc',
-  phone: '+212 5 22 XX XX XX',
+  address: '25 boulvard lakhdar ghilane - oujda',
+  phone: '+212-688103420',
   email: 'contact@sbcodage-auto.ma',
-  website: 'www.sbcodage-auto.ma'
+  patente: '10103398',
+  instagram: '@sb_codageauto',
+  logoUrl: '/Gemini_Generated_Image_9mjocl9mjocl9mjo-removebg-preview.png'
 };
 
 export interface ExportOptions {

@@ -11,6 +11,9 @@ export interface InvoiceData {
     phone: string;
     email: string;
     website?: string;
+    patente?: string;
+    instagram?: string;
+    logoUrl?: string;
   };
 }
 
@@ -18,465 +21,493 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
   const { reparation, invoiceNumber, invoiceDate, companyInfo } = data;
   const car = typeof reparation.car === 'string' ? null : reparation.car;
 
+  const subtotal = reparation.totalCost || 0;
+  const rowCount = (reparation.items?.length || 0) + (reparation.services?.length || 0) + ((reparation.laborCost && reparation.laborCost > 0) ? 1 : 0);
+  const densityClass =
+    rowCount > 26 ? 'nano-compact' :
+    rowCount > 20 ? 'micro-compact' :
+    rowCount > 16 ? 'ultra-compact' :
+    rowCount > 12 ? 'super-compact' :
+    rowCount > 8 ? 'compact' : '';
+  const logoUrl = companyInfo.logoUrl || '/Gemini_Generated_Image_9mjocl9mjocl9mjo-removebg-preview.png';
+
   return `
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facture ${invoiceNumber} - SbCodage AUTO</title>
+    <title>Facture ${invoiceNumber} - ${companyInfo.name}</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.5;
-            color: #2c3e50;
-            background: #fff;
-            margin: 0;
-            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #f1f5f9;
+            padding: 40px 20px;
         }
-        
+
         .invoice-container {
-            max-width: 210mm;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 15mm;
-            background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            background: #f8f7f4;
+            padding: 60px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 30mm;
-            border-bottom: 4px solid #e74c3c;
-            padding-bottom: 15mm;
-            position: relative;
+            margin-bottom: 60px;
         }
-        
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -5mm;
-            left: 0;
-            right: 0;
-            height: 2mm;
-            background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
-        }
-        
+
         .company-info {
             flex: 1;
         }
-        
+
+        .logo-circle {
+            width: 60px;
+            height: 60px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .logo-circle::before {
+            content: '';
+            width: 30px;
+            height: 30px;
+            border: 4px solid #f8f7f4;
+            border-top-color: transparent;
+            border-right-color: transparent;
+            border-radius: 50%;
+            transform: rotate(-45deg);
+        }
+
         .company-name {
-            font-size: 32px;
-            font-weight: 900;
-            color: #e74c3c;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 4px;
+            line-height: 1.2;
         }
-        
-        .company-tagline {
-            font-size: 14px;
-            color: #7f8c8d;
-            font-style: italic;
-            margin-bottom: 15px;
-        }
-        
+
         .company-details {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.4;
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.8;
+            margin-top: 12px;
         }
-        
+
         .invoice-info {
             text-align: right;
-            flex: 1;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #e74c3c;
         }
-        
+
         .invoice-title {
-            font-size: 36px;
-            font-weight: 900;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            font-size: 42px;
+            font-weight: 800;
+            color: #6b7280; /* grey */
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
         }
-        
-        .invoice-details {
-            font-size: 16px;
-            color: #34495e;
+
+        .invoice-date {
+            font-size: 15px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .billing-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 50px;
+        }
+
+        .billing-box {
+            flex: 0 0 48%;
+        }
+
+        .section-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2d3748;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .billing-info {
+            font-size: 14px;
+            color: #4a5568;
+            line-height: 1.8;
+        }
+
+        .billing-info strong {
+            color: #2d3748;
             font-weight: 600;
         }
-        
-        .invoice-number {
-            font-size: 18px;
-            color: #e74c3c;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .client-section {
-            margin-bottom: 30px;
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #e74c3c;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #e74c3c;
-            padding-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .client-info {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 5px solid #e74c3c;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        
-        .vehicle-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .vehicle-details {
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #10b981;
-        }
-        
-        .repair-details {
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #f59e0b;
-        }
-        
-        .services-table {
+
+        .items-table {
             width: 100%;
-            border-collapse: collapse;
             margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border-radius: 10px;
-            overflow: hidden;
+            border-collapse: separate;
+            border-spacing: 0;
         }
-        
-        .services-table th {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+
+        .items-table thead {
+            background: #6b7280; /* grey */
             color: white;
-            padding: 15px 12px;
+        }
+
+        .items-table th {
+            padding: 16px 20px;
             text-align: left;
-            font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
-        .services-table td {
-            padding: 15px 12px;
-            border-bottom: 1px solid #ecf0f1;
+
+        .items-table th:last-child,
+        .items-table td:last-child {
+            text-align: right;
+        }
+
+        .items-table tbody tr {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .items-table td {
+            padding: 20px;
+            font-size: 14px;
+            color: #2d3748;
             vertical-align: top;
         }
-        
-        .services-table tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-        
-        .services-table tr:hover {
-            background: #e8f4fd;
-        }
-        
-        .service-name {
-            font-weight: bold;
-            color: #2c3e50;
+
+        .item-name {
+            font-weight: 600;
+            color: #2d3748;
             margin-bottom: 4px;
         }
-        
-        .service-description {
+
+        .item-description {
             font-size: 12px;
-            color: #7f8c8d;
-            font-style: italic;
+            color: #718096;
+            line-height: 1.5;
         }
-        
-        .amount {
-            text-align: right;
-            font-weight: bold;
+
+        .totals-section {
+            background: white;
+            padding: 30px;
+            margin-top: 30px;
         }
-        
-        .totals {
-            margin-top: 25px;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border-top: 4px solid #e74c3c;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        
+
         .total-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            font-size: 16px;
-            border-bottom: 1px solid #ecf0f1;
+            padding: 12px 0;
+            font-size: 15px;
+            color: #4a5568;
         }
-        
+
+        .total-row.highlight {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
         .total-row.final {
-            font-size: 22px;
-            font-weight: bold;
-            color: #e74c3c;
-            border-top: 3px solid #e74c3c;
-            border-bottom: none;
-            margin-top: 15px;
-            padding-top: 20px;
-            background: white;
-            margin: 15px -20px -20px -20px;
-            padding: 20px;
-            border-radius: 0 0 10px 10px;
+            background: #6b7280; /* grey */
+            color: white;
+            padding: 20px 30px;
+            margin: 20px -30px -30px -30px;
+            font-size: 20px;
+            font-weight: 700;
         }
-        
-        .footer {
+
+        .notes-section {
             margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
+            padding: 20px;
+            background: white;
         }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
+
+        .notes-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
-        .status-completed {
-            background: #dcfce7;
-            color: #166534;
+
+        .notes-content {
+            font-size: 13px;
+            color: #718096;
+            line-height: 1.8;
         }
-        
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
+
+        .footer {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #cbd5e0;
+            text-align: center;
         }
-        
-        .status-in-progress {
-            background: #dbeafe;
-            color: #1e40af;
+
+        .footer-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #6b7280; /* grey */
+            margin-bottom: 20px;
         }
-        
-        .status-cancelled {
-            background: #fee2e2;
-            color: #dc2626;
+
+        .footer-columns {
+            display: flex;
+            justify-content: space-between;
+            text-align: left;
+            margin-top: 20px;
         }
-        
+
+        .footer-column {
+            flex: 1;
+            font-size: 12px;
+            color: #4a5568;
+            line-height: 1.8;
+        }
+
+        .footer-column strong {
+            display: block;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        /* Print page size */
+        @page {
+            size: A4;
+            margin: 12mm;
+        }
+
+        .logo-img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            margin-bottom: 16px;
+        }
+
+        /* Density adjustments for single-page fit */
+        .compact .invoice-container { padding: 50px; }
+        .super-compact .invoice-container { padding: 44px; }
+        .ultra-compact .invoice-container { padding: 38px; }
+        .micro-compact .invoice-container { padding: 32px; }
+        .nano-compact .invoice-container { padding: 28px; }
+
+        .compact .logo-img { width: 100px; height: 100px; }
+        .super-compact .logo-img { width: 90px; height: 90px; }
+        .ultra-compact .logo-img { width: 80px; height: 80px; }
+        .micro-compact .logo-img { width: 70px; height: 70px; }
+        .nano-compact .logo-img { width: 60px; height: 60px; }
+
+        .compact .header { margin-bottom: 50px; }
+        .super-compact .header { margin-bottom: 44px; }
+        .ultra-compact .header { margin-bottom: 36px; }
+        .micro-compact .header { margin-bottom: 30px; }
+        .nano-compact .header { margin-bottom: 26px; }
+
+        .compact .company-name { font-size: 24px; }
+        .super-compact .company-name { font-size: 22px; }
+        .ultra-compact .company-name { font-size: 20px; }
+        .micro-compact .company-name { font-size: 18px; }
+        .nano-compact .company-name { font-size: 16px; }
+
+        .compact .items-table th,
+        .compact .items-table td { padding: 12px 14px; font-size: 13px; }
+        .super-compact .items-table th,
+        .super-compact .items-table td { padding: 10px 12px; font-size: 12px; }
+        .ultra-compact .items-table th,
+        .ultra-compact .items-table td { padding: 8px 10px; font-size: 11px; }
+        .micro-compact .items-table th,
+        .micro-compact .items-table td { padding: 6px 8px; font-size: 10px; }
+        .nano-compact .items-table th,
+        .nano-compact .items-table td { padding: 5px 6px; font-size: 9px; }
+
+        .compact .totals-section { padding: 24px; }
+        .super-compact .totals-section { padding: 20px; }
+        .ultra-compact .totals-section { padding: 16px; }
+        .micro-compact .totals-section { padding: 12px; }
+        .nano-compact .totals-section { padding: 10px; }
+
         @media print {
             body {
-                margin: 0;
+                background: white;
                 padding: 0;
             }
-            
+
             .invoice-container {
                 max-width: none;
-                margin: 0;
-                padding: 15px;
-            }
-            
-            .header {
-                margin-bottom: 30px;
-            }
-            
-            .services-table {
-                font-size: 12px;
+                box-shadow: none;
+                padding: 40px;
             }
         }
     </style>
 </head>
-<body>
+<body class="${densityClass}">
     <div class="invoice-container">
-        <!-- Header -->
         <div class="header">
             <div class="company-info">
+                <img src="${logoUrl}" class="logo-img" alt="Logo" />
                 <div class="company-name">${companyInfo.name}</div>
-                <div class="company-tagline">Spécialiste Automobile & Réparations</div>
                 <div class="company-details">
-                    📍 ${companyInfo.address.replace(/\n/g, '<br>')}<br>
-                    📞 Tél: ${companyInfo.phone}<br>
-                    ✉️ Email: ${companyInfo.email}
-                    ${companyInfo.website ? `<br>🌐 Site: ${companyInfo.website}` : ''}
+                    <strong>Adresse</strong><br>
+                    ${companyInfo.address.replace(/\n/g, '<br>')}<br><br>
+                    Garage: ${companyInfo.phone}<br>
+                    ${companyInfo.patente ? `N° Patente: ${companyInfo.patente}<br>` : ''}${companyInfo.instagram ? `Instagram: ${companyInfo.instagram}` : ''}
                 </div>
             </div>
             <div class="invoice-info">
                 <div class="invoice-title">FACTURE</div>
-                <div class="invoice-details">
-                    <div class="invoice-number">N° ${invoiceNumber}</div>
-                    <div>Date: ${invoiceDate}</div>
+                <div class="invoice-date">${invoiceDate}</div>
+            </div>
+        </div>
+
+        <div class="billing-section">
+            <div class="billing-box">
+                <div class="section-label">INFORMATIONS VÉHICULE :</div>
+                <div class="billing-info">
+                    <strong>${car?.make || 'N/A'} ${car?.model || 'N/A'}</strong><br>
+                    Année: ${car?.year || 'N/A'}<br>
+                    ${car?.licensePlate ? `Immatriculation: ${car.licensePlate}<br>` : ''}
+                    ${car?.vin ? `VIN: ${car.vin}` : ''}
+                </div>
+            </div>
+            <div class="billing-box">
+                <div class="section-label">À :</div>
+                <div class="billing-info">
+                    <strong>${car?.owner?.name || 'N/A'}</strong><br>
+                    ${car?.owner?.email ? `Email: ${car.owner.email}<br>` : ''}
+                    ${car?.owner?.phone ? `Téléphone: ${car.owner.phone}` : ''}
                 </div>
             </div>
         </div>
 
-        <!-- Client Information -->
-        <div class="client-section">
-            <div class="section-title">Informations Client</div>
-            <div class="client-info">
-                <strong>${car?.owner?.name || 'N/A'}</strong><br>
-                ${car?.owner?.phone ? `Tél: ${car.owner.phone}<br>` : ''}
-                ${car?.owner?.email ? `Email: ${car.owner.email}` : ''}
-            </div>
-        </div>
-
-        <!-- Vehicle & Repair Information -->
-        <div class="vehicle-info">
-            <div class="vehicle-details">
-                <div class="section-title">Véhicule</div>
-                <strong>${car?.make || 'N/A'} ${car?.model || 'N/A'}</strong><br>
-                Année: ${car?.year || 'N/A'}<br>
-                ${car?.licensePlate ? `Plaque: ${car.licensePlate}<br>` : ''}
-                ${car?.vin ? `VIN: ${car.vin}` : ''}
-            </div>
-            <div class="repair-details">
-                <div class="section-title">Réparation</div>
-                <strong>Réparation #${reparation._id?.slice(-6) || 'N/A'}</strong><br>
-                Technicien: ${reparation.technician || 'N/A'}<br>
-                Statut: <span class="status-badge status-${reparation.status || 'pending'}">${getStatusLabel(reparation.status || 'pending')}</span><br>
-                ${reparation.startDate ? `Début: ${new Date(reparation.startDate).toLocaleDateString('fr-FR')}` : ''}
-                ${reparation.endDate ? `<br>Fin: ${new Date(reparation.endDate).toLocaleDateString('fr-FR')}` : ''}
-            </div>
-        </div>
-
-        <!-- Description -->
-        ${reparation.description ? `
-        <div class="client-section">
-            <div class="section-title">Description des Travaux</div>
-            <div class="client-info">
-                ${reparation.description}
-            </div>
-        </div>
-        ` : ''}
-
-        <!-- Services & Items Table -->
-        <table class="services-table">
+        <table class="items-table">
             <thead>
                 <tr>
                     <th>Description</th>
+                    <th style="width: 120px;">Prix unitaire</th>
                     <th style="width: 80px;">Qté</th>
-                    <th style="width: 120px;">Prix Unit.</th>
                     <th style="width: 120px;">Total</th>
                 </tr>
             </thead>
             <tbody>
                 ${reparation.items?.map(item => {
                     const itemData = typeof item.item === 'string' ? { name: item.item } : item.item;
-                    const unitPrice = item.price || 0;
+                    const unitPrice = item.sellPrice || 0;
                     const total = unitPrice * item.quantity;
                     return `
                     <tr>
                         <td>
-                            <div class="service-name">🔧 ${itemData.name}</div>
-                            <div class="service-description">Pièce détachée</div>
+                            <div class="item-name">${itemData.name}</div>
+                            <div class="item-description">${'Pièce de rechange'}</div>
                         </td>
-                        <td class="amount">${item.quantity}</td>
-                        <td class="amount">${formatCurrency(unitPrice)}</td>
-                        <td class="amount">${formatCurrency(total)}</td>
+                        <td>${formatCurrency(unitPrice)}</td>
+                        <td>${item.quantity}</td>
+                        <td>${formatCurrency(total)}</td>
                     </tr>
-                    `;
-                }).join('') || ''}
-                
+                `;
+            }).join('') || ''}
+
                 ${reparation.services?.map(service => {
                     const serviceData = typeof service.service === 'string' ? { name: service.service } : service.service;
                     return `
                     <tr>
                         <td>
-                            <div class="service-name">⚙️ ${serviceData.name}</div>
-                            <div class="service-description">Service professionnel${service.notes ? ` - ${service.notes}` : ''}</div>
+                            <div class="item-name">${serviceData.name}</div>
+                            <div class="item-description">${service.notes || 'Service'}</div>
                         </td>
-                        <td class="amount">1</td>
-                        <td class="amount">${formatCurrency(service.price || 0)}</td>
-                        <td class="amount">${formatCurrency(service.price || 0)}</td>
+                        <td>${formatCurrency(service.price || 0)}</td>
+                        <td>1</td>
+                        <td>${formatCurrency(service.price || 0)}</td>
                     </tr>
-                    `;
-                }).join('') || ''}
-                
+                `;
+            }).join('') || ''}
+
                 ${reparation.laborCost && reparation.laborCost > 0 ? `
                 <tr>
                     <td>
-                        <div class="service-name">👨‍🔧 Main d'œuvre</div>
-                        <div class="service-description">Travaux de réparation spécialisés</div>
+                        <div class="item-name">Main-d'œuvre</div>
+                        <div class="item-description">Main-d'œuvre et services de réparation</div>
                     </td>
-                    <td class="amount">1</td>
-                    <td class="amount">${formatCurrency(reparation.laborCost)}</td>
-                    <td class="amount">${formatCurrency(reparation.laborCost)}</td>
+                    <td>${formatCurrency(reparation.laborCost)}</td>
+                    <td>1</td>
+                    <td>${formatCurrency(reparation.laborCost)}</td>
                 </tr>
                 ` : ''}
             </tbody>
         </table>
 
-        <!-- Totals -->
-        <div class="totals">
+        <div class="totals-section">
             ${reparation.partsCost && reparation.partsCost > 0 ? `
             <div class="total-row">
-                <span>Sous-total Pièces:</span>
+                <span>Pièces :</span>
                 <span>${formatCurrency(reparation.partsCost)}</span>
             </div>
             ` : ''}
-            
             ${reparation.servicesCost && reparation.servicesCost > 0 ? `
             <div class="total-row">
-                <span>Sous-total Services:</span>
+                <span>Services :</span>
                 <span>${formatCurrency(reparation.servicesCost)}</span>
             </div>
             ` : ''}
-            
             ${reparation.laborCost && reparation.laborCost > 0 ? `
             <div class="total-row">
-                <span>Main d'œuvre:</span>
+                <span>Main-d’œuvre :</span>
                 <span>${formatCurrency(reparation.laborCost)}</span>
             </div>
             ` : ''}
-            
             <div class="total-row final">
-                <span>TOTAL TTC:</span>
-                <span>${formatCurrency(reparation.totalCost || 0)}</span>
+                <span>TOTAL À PAYER :</span>
+                <span>${formatCurrency(subtotal)}</span>
             </div>
         </div>
 
-        <!-- Notes -->
         ${reparation.notes ? `
-        <div class="client-section">
-            <div class="section-title">Notes</div>
-            <div class="client-info">
-                ${reparation.notes.replace(/\n/g, '<br>')}
+        <div class="notes-section">
+            <div class="notes-title">Remarque :</div>
+            <div class="notes-content">
+                ${reparation.notes}
             </div>
         </div>
         ` : ''}
 
-        <!-- Footer -->
         <div class="footer">
-            <p><strong>🚗 Merci de votre confiance pour l'entretien de votre véhicule ! 🚗</strong></p>
-            <p>Garantie sur toutes nos réparations • Service après-vente assuré</p>
-            <p style="margin-top: 10px; font-size: 11px; color: #7f8c8d;">
-                Facture générée automatiquement par SbCodage AUTO le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-            </p>
+            <div class="footer-title">Merci pour votre confiance</div>
+            <div class="footer-columns">
+                <div class="footer-column">
+                    <strong>Questions ?</strong>
+                    Email : ${companyInfo.email}<br>
+                    Téléphone : ${companyInfo.phone}
+                </div>
+                <div class="footer-column">
+                    <strong>Conditions générales :</strong>
+                    Paiement à la réception du véhicule.<br>
+                    Garantie main-d'œuvre 30 jours; pièces selon fournisseur.<br>
+                    Toute réclamation dans les 48h suivant la livraison.<br>
+                    Véhicule non retiré sous 7 jours: frais de garde possibles.
+                </div>
+            </div>
         </div>
     </div>
 </body>
