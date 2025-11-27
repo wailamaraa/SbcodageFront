@@ -9,7 +9,7 @@ const DEFAULT_COMPANY_INFO = {
   email: 'contact@sbcodage-auto.ma',
   patente: '10103398',
   instagram: '@sb_codageauto',
-  logoUrl: '/Gemini_Generated_Image_9mjocl9mjocl9mjo-removebg-preview.png'
+  logoUrl: '/image.png'
 };
 
 export interface ExportOptions {
@@ -38,11 +38,12 @@ export const exportInvoice = async (
   };
 
   const htmlContent = generateInvoiceHTML(invoiceData);
+  const baseId = (reparation as any)._id || invoiceData.invoiceNumber;
 
   if (options.format === 'html') {
-    downloadHTML(htmlContent, `Facture_${invoiceData.invoiceNumber}.html`);
+    downloadHTML(htmlContent, `Facture_${baseId}.html`);
   } else if (options.format === 'pdf') {
-    await downloadPDF(htmlContent, `Facture_${invoiceData.invoiceNumber}.pdf`);
+    await downloadPDF(htmlContent, `Facture_${baseId}.pdf`);
   }
 };
 
@@ -62,37 +63,59 @@ const downloadHTML = (htmlContent: string, filename: string): void => {
   URL.revokeObjectURL(url);
 };
 
-const downloadPDF = async (htmlContent: string, filename: string): Promise<void> => {
-  try {
-    // Create a new window for PDF generation
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      throw new Error('Unable to open print window. Please check popup blocker settings.');
+const ensureJsPdfLoaded = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (typeof (window as any).jspdf !== 'undefined') {
+      resolve();
+      return;
     }
 
-    // Write HTML content to the new window
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    const existingScript = document.querySelector<HTMLScriptElement>('script[data-jspdf="true"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve());
+      existingScript.addEventListener('error', () => reject(new Error('Failed to load jsPDF')));
+      return;
+    }
 
-    // Wait for content to load
-    await new Promise((resolve) => {
-      printWindow.onload = resolve;
-      // Fallback timeout
-      setTimeout(resolve, 1000);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.async = true;
+    script.setAttribute('data-jspdf', 'true');
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load jsPDF'));
+    document.body.appendChild(script);
+  });
+};
+
+const downloadPDF = async (htmlContent: string, filename: string): Promise<void> => {
+  try {
+    await ensureJsPdfLoaded();
+
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '210mm';
+    container.style.background = '#ffffff';
+    container.innerHTML = htmlContent;
+    document.body.appendChild(container);
+
+    const element = container.querySelector('.invoice-container') || container;
+
+    const { jsPDF } = (window as any).jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+    await doc.html(element as HTMLElement, {
+      margin: [10, 10, 10, 10],
+      autoPaging: 'text',
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      callback: (pdf: any) => {
+        pdf.save(filename);
+        document.body.removeChild(container);
+      }
     });
-
-    // Focus and print
-    printWindow.focus();
-    printWindow.print();
-
-    // Close the window after a delay (to allow printing to complete)
-    setTimeout(() => {
-      printWindow.close();
-    }, 1000);
-
   } catch (error) {
     console.error('Error generating PDF:', error);
-    // Fallback to HTML download
     downloadHTML(htmlContent, filename.replace('.pdf', '.html'));
     throw new Error('PDF generation failed. HTML version downloaded instead.');
   }

@@ -22,6 +22,9 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
   const car = typeof reparation.car === 'string' ? null : reparation.car;
 
   const subtotal = reparation.totalCost || 0;
+  const dueDate = (reparation as any).endDate
+    ? new Date((reparation as any).endDate).toLocaleDateString('fr-FR')
+    : invoiceDate;
   const rowCount = (reparation.items?.length || 0) + (reparation.services?.length || 0) + ((reparation.laborCost && reparation.laborCost > 0) ? 1 : 0);
   const densityClass =
     rowCount > 26 ? 'nano-compact' :
@@ -50,30 +53,49 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             line-height: 1.6;
-            color: #1a1a1a;
-            background: #f1f5f9;
-            padding: 40px 20px;
+            color: #111827;
+            background: #f3f4f6;
+            padding: 32px 16px;
         }
 
         .invoice-container {
             max-width: 800px;
             margin: 0 auto;
-            background: #f8f7f4;
-            padding: 60px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: #ffffff;
+            padding: 24px 28px 24px 28px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
             position: relative;
+            overflow: hidden;
+        }
+
+        .invoice-container::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            height: 0;
+            background: transparent;
+        }
+
+        .invoice-inner {
+            position: relative;
+            margin-top: 0;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 60px;
+            align-items: center;
+            padding-top: 4px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 18px;
         }
 
-        .company-info {
-            flex: 1;
-        }
+        .company-info { flex: 1; }
 
         .logo-circle {
             width: 60px;
@@ -98,68 +120,23 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
             transform: rotate(-45deg);
         }
 
-        .company-name {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 4px;
-            line-height: 1.2;
-        }
+        .company-name { font-size: 22px; font-weight: 700; color: #111827; margin-bottom: 6px; line-height: 1.2; }
 
-        .company-details {
-            font-size: 13px;
-            color: #4a5568;
-            line-height: 1.8;
-            margin-top: 12px;
-        }
+        .company-details { font-size: 13px; color: #6b7280; line-height: 1.7; }
 
-        .invoice-info {
-            text-align: right;
-        }
+        .invoice-info { text-align: right; }
 
-        .invoice-title {
-            font-size: 42px;
-            font-weight: 800;
-            color: #6b7280; /* grey */
-            letter-spacing: -0.5px;
-            margin-bottom: 8px;
-        }
-
-        .invoice-date {
-            font-size: 15px;
-            color: #4a5568;
-            font-weight: 500;
-        }
-
-        .billing-section {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 50px;
-        }
+        .billing-section { display: flex; justify-content: space-between; margin-bottom: 18px; }
 
         .billing-box {
             flex: 0 0 48%;
         }
 
-        .section-label {
-            font-size: 13px;
-            font-weight: 700;
-            color: #2d3748;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-        }
+        .section-label { font-size: 12px; font-weight: 700; color: #374151; text-transform: none; letter-spacing: 0.2px; margin-bottom: 8px; }
 
-        .billing-info {
-            font-size: 14px;
-            color: #4a5568;
-            line-height: 1.8;
-        }
+        .billing-info { font-size: 13px; color: #4b5563; line-height: 1.7; }
 
-        .billing-info strong {
-            color: #2d3748;
-            font-weight: 600;
-        }
+        .billing-info strong { color: #111827; font-weight: 700; }
 
         .items-table {
             width: 100%;
@@ -168,76 +145,33 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
             border-spacing: 0;
         }
 
-        .items-table thead {
-            background: #6b7280; /* grey */
-            color: white;
-        }
+        .items-table thead { background: #f3f4f6; color: #374151; }
 
-        .items-table th {
-            padding: 16px 20px;
-            text-align: left;
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        .items-table th { padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
 
         .items-table th:last-child,
         .items-table td:last-child {
             text-align: right;
         }
 
-        .items-table tbody tr {
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
-        }
+        .items-table tbody tr { background: white; border-bottom: 1px solid #e5e7eb; }
 
-        .items-table td {
-            padding: 20px;
-            font-size: 14px;
-            color: #2d3748;
-            vertical-align: top;
-        }
+        .items-table td { padding: 14px 16px; font-size: 13px; color: #111827; vertical-align: top; }
 
-        .item-name {
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 4px;
-        }
+        .item-name { font-weight: 700; color: #111827; margin-bottom: 4px; }
 
-        .item-description {
-            font-size: 12px;
-            color: #718096;
-            line-height: 1.5;
-        }
+        .item-description { font-size: 12px; color: #6b7280; line-height: 1.5; }
 
-        .totals-section {
-            background: white;
-            padding: 30px;
-            margin-top: 30px;
-        }
+        .totals-section { background: white; padding: 12px 0 6px 0; margin-top: 8px; }
 
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            font-size: 15px;
-            color: #4a5568;
-        }
+        .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: #374151; }
 
         .total-row.highlight {
             color: #2d3748;
             font-weight: 600;
         }
 
-        .total-row.final {
-            background: #6b7280; /* grey */
-            color: white;
-            padding: 20px 30px;
-            margin: 20px -30px -30px -30px;
-            font-size: 20px;
-            font-weight: 700;
-        }
+        .total-row.final { font-weight: 800; color: #111827; font-size: 16px; padding-top: 10px; border-top: 1px solid #e5e7eb; }
 
         .notes-section {
             margin-top: 40px;
@@ -260,52 +194,22 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
             line-height: 1.8;
         }
 
-        .footer {
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 1px solid #cbd5e0;
-            text-align: center;
-        }
+        .footer { margin-top: 18px; padding-top: 12px; }
 
-        .footer-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #6b7280; /* grey */
-            margin-bottom: 20px;
-        }
+        .footer-title { font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 14px; }
 
-        .footer-columns {
-            display: flex;
-            justify-content: space-between;
-            text-align: left;
-            margin-top: 20px;
-        }
+        .footer-columns { margin-top: 8px; }
 
-        .footer-column {
-            flex: 1;
-            font-size: 12px;
-            color: #4a5568;
-            line-height: 1.8;
-        }
+        .footer-column { font-size: 12px; color: #6b7280; line-height: 1.7; }
 
-        .footer-column strong {
-            display: block;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 8px;
-        }
+        .footer-column strong { display: block; font-weight: 700; color: #374151; margin-bottom: 6px; }
         /* Print page size */
         @page {
             size: A4;
             margin: 12mm;
         }
 
-        .logo-img {
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
-            margin-bottom: 16px;
-        }
+        .logo-img { width: 140px; height: 80px; object-fit: contain; }
 
         /* Density adjustments for single-page fit */
         .compact .invoice-container { padding: 50px; }
@@ -365,39 +269,60 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
 </head>
 <body class="${densityClass}">
     <div class="invoice-container">
+        <div class="invoice-inner">
         <div class="header">
             <div class="company-info">
-                <img src="${logoUrl}" class="logo-img" alt="Logo" />
                 <div class="company-name">${companyInfo.name}</div>
                 <div class="company-details">
-                    <strong>Adresse</strong><br>
-                    ${companyInfo.address.replace(/\n/g, '<br>')}<br><br>
-                    Garage: ${companyInfo.phone}<br>
-                    ${companyInfo.patente ? `N° Patente: ${companyInfo.patente}<br>` : ''}${companyInfo.instagram ? `Instagram: ${companyInfo.instagram}` : ''}
+                    ${companyInfo.email}<br>
+                    ${companyInfo.phone}<br>
+                    ${companyInfo.address.replace(/\n/g, '<br>')}
                 </div>
             </div>
             <div class="invoice-info">
-                <div class="invoice-title">FACTURE</div>
-                <div class="invoice-date">${invoiceDate}</div>
+                <img src="${logoUrl}" class="logo-img" alt="Logo" />
             </div>
         </div>
 
         <div class="billing-section">
             <div class="billing-box">
-                <div class="section-label">INFORMATIONS VÉHICULE :</div>
+                <div class="section-label">Facturé à</div>
                 <div class="billing-info">
-                    <strong>${car?.make || 'N/A'} ${car?.model || 'N/A'}</strong><br>
-                    Année: ${car?.year || 'N/A'}<br>
-                    ${car?.licensePlate ? `Immatriculation: ${car.licensePlate}<br>` : ''}
-                    ${car?.vin ? `VIN: ${car.vin}` : ''}
+                    <strong>${car?.owner?.name || 'N/A'}</strong><br>
+                    ${car?.owner?.phone ? `${car.owner.phone}<br>` : ''}
+                    ${car?.owner?.email ? `${car.owner.email}<br>` : ''}
+                    ${car?.make || ''} ${car?.model || ''} ${car?.year ? `(${car.year})` : ''}<br>
+                    ${car?.licensePlate ? `Immatriculation: ${car.licensePlate}` : ''}
+                </div>
+            </div>
+            <div class="billing-box" style="text-align: right;">
+                <div class="section-label">Montant (MAD)</div>
+                <div style="font-size: 26px; font-weight: 800; color: #0f172a;">${formatCurrency(subtotal)}</div>
+            </div>
+        </div>
+
+        <div class="billing-section" style="margin-top: 0;">
+            <div class="billing-box">
+                <div class="section-label">Objet</div>
+                <div class="billing-info">
+                    ${(() => {
+                      const parts: string[] = [];
+                      if (car?.make || car?.model) {
+                        parts.push(`${car?.make || ''} ${car?.model || ''}`.trim());
+                      }
+                      const label = parts.length ? `Prestation de personnalisation et entretien pour ${parts.join(' ')}` : 'Prestation de réparation et entretien véhicule';
+                      return label;
+                    })()}
                 </div>
             </div>
             <div class="billing-box">
-                <div class="section-label">À :</div>
-                <div class="billing-info">
-                    <strong>${car?.owner?.name || 'N/A'}</strong><br>
-                    ${car?.owner?.email ? `Email: ${car.owner.email}<br>` : ''}
-                    ${car?.owner?.phone ? `Téléphone: ${car.owner.phone}` : ''}
+                <div class="billing-info" style="display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 16px; row-gap: 6px; font-size: 13px;">
+                    <span class="section-label" style="margin-bottom: 0; text-transform: none; font-size: 13px;">Date de la facture</span>
+                    <span>${invoiceDate}</span>
+                    <span class="section-label" style="margin-bottom: 0; text-transform: none; font-size: 13px;">Date d'échéance</span>
+                    <span>${dueDate}</span>
+                    <span class="section-label" style="margin-bottom: 0; text-transform: none; font-size: 13px;">Référence</span>
+                    <span>#${invoiceNumber}</span>
                 </div>
             </div>
         </div>
@@ -405,10 +330,10 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
         <table class="items-table">
             <thead>
                 <tr>
-                    <th>Description</th>
-                    <th style="width: 120px;">Prix unitaire</th>
-                    <th style="width: 80px;">Qté</th>
-                    <th style="width: 120px;">Total</th>
+                    <th>DÉTAIL DE L'ARTICLE</th>
+                    <th style="width: 60px; text-align: center;">QTY</th>
+                    <th style="width: 120px;">TAUX</th>
+                    <th style="width: 120px;">MONTANT</th>
                 </tr>
             </thead>
             <tbody>
@@ -422,8 +347,8 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
                             <div class="item-name">${itemData.name}</div>
                             <div class="item-description">${'Pièce de rechange'}</div>
                         </td>
+                        <td style="text-align: center;">${item.quantity}</td>
                         <td>${formatCurrency(unitPrice)}</td>
-                        <td>${item.quantity}</td>
                         <td>${formatCurrency(total)}</td>
                     </tr>
                 `;
@@ -437,8 +362,8 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
                             <div class="item-name">${serviceData.name}</div>
                             <div class="item-description">${service.notes || 'Service'}</div>
                         </td>
+                        <td style="text-align: center;">1</td>
                         <td>${formatCurrency(service.price || 0)}</td>
-                        <td>1</td>
                         <td>${formatCurrency(service.price || 0)}</td>
                     </tr>
                 `;
@@ -450,8 +375,8 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
                         <div class="item-name">Main-d'œuvre</div>
                         <div class="item-description">Main-d'œuvre et services de réparation</div>
                     </td>
+                    <td style="text-align: center;">1</td>
                     <td>${formatCurrency(reparation.laborCost)}</td>
-                    <td>1</td>
                     <td>${formatCurrency(reparation.laborCost)}</td>
                 </tr>
                 ` : ''}
@@ -477,50 +402,30 @@ export const generateInvoiceHTML = (data: InvoiceData): string => {
                 <span>${formatCurrency(reparation.laborCost)}</span>
             </div>
             ` : ''}
+            <div class="total-row" style="border-top: 1px solid #e5e7eb; margin-top: 4px;">
+                <span>Sous-total :</span>
+                <span>${formatCurrency(subtotal)}</span>
+            </div>
             <div class="total-row final">
-                <span>TOTAL À PAYER :</span>
+                <span>Total :</span>
                 <span>${formatCurrency(subtotal)}</span>
             </div>
         </div>
 
-        ${reparation.notes ? `
-        <div class="notes-section">
-            <div class="notes-title">Remarque :</div>
-            <div class="notes-content">
-                ${reparation.notes}
-            </div>
-        </div>
-        ` : ''}
+        
 
         <div class="footer">
-            <div class="footer-title">Merci pour votre confiance</div>
+            <div class="footer-title">Merci pour votre confiance.</div>
             <div class="footer-columns">
                 <div class="footer-column">
-                    <strong>Questions ?</strong>
-                    Email : ${companyInfo.email}<br>
-                    Téléphone : ${companyInfo.phone}
-                </div>
-                <div class="footer-column">
-                    <strong>Conditions générales :</strong>
-                    Paiement à la réception du véhicule.<br>
-                    Garantie main-d'œuvre 30 jours; pièces selon fournisseur.<br>
-                    Toute réclamation dans les 48h suivant la livraison.<br>
-                    Véhicule non retiré sous 7 jours: frais de garde possibles.
+                    <strong>Conditions générales</strong>
+                    Veuillez payer dès réception de cette facture.
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </body>
 </html>
   `;
 };
-
-function getStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    'pending': 'En Attente',
-    'in_progress': 'En Cours',
-    'completed': 'Terminé',
-    'cancelled': 'Annulé'
-  };
-  return labels[status] || status;
-}
