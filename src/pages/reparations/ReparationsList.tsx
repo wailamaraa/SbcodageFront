@@ -10,8 +10,6 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import { useCrud } from '../../hooks/useCrud';
 import { formatCurrency } from '../../utils/formatters';
-import { exportInvoice } from '../../utils/invoiceExport';
-import { toast } from 'react-hot-toast';
 
 const ReparationsList: React.FC = () => {
   const navigate = useNavigate();
@@ -84,6 +82,16 @@ const ReparationsList: React.FC = () => {
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
   };
 
+  const downloadInvoice = (id: string) => {
+    const a = document.createElement('a');
+    a.href = `/api/reparations/${id}/invoice`;
+    a.setAttribute('download', '');
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleStatusChange = async (reparationId: string, newStatus: string) => {
     try {
       await reparationsApi.updateStatus(reparationId, newStatus as Reparation['status']);
@@ -98,16 +106,6 @@ const ReparationsList: React.FC = () => {
       });
     } catch (error) {
       console.error('Failed to update status:', error);
-    }
-  };
-
-  const handleExportInvoice = async (reparation: Reparation, format: 'html' | 'pdf') => {
-    try {
-      await exportInvoice(reparation, { format });
-      toast.success(`Facture exportée en ${format.toUpperCase()}`);
-    } catch (error) {
-      console.error('Failed to export invoice:', error);
-      toast.error('Erreur lors de l\'export de la facture');
     }
   };
 
@@ -350,11 +348,11 @@ const ReparationsList: React.FC = () => {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleExportInvoice(reparation, 'pdf');
+                      downloadInvoice(reparation._id);
                     }}
                     icon={<Download size={12} />}
                     className="flex-1 text-xs justify-center items-center"
-                    title="Export facture PDF"
+                    title="Télécharger la facture PDF"
                   >
                     Facture
                   </Button>

@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Car, DollarSign, FileText, Package, Wrench, PlayCircle, CheckCircle, TrendingUp, ArrowLeft, Edit, Trash2, User, Download, Eye } from 'lucide-react';
+import { Car, DollarSign, Package, Wrench, PlayCircle, CheckCircle, TrendingUp, ArrowLeft, Edit, Trash2, User, FileText, Download } from 'lucide-react';
 import { reparationsApi } from '../../services/api/reparations';
 import { useDetails } from '../../hooks/useDetails';
 import Badge, { BadgeVariant } from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import { formatCurrency } from '../../utils/formatters';
-import { exportInvoice, previewInvoice } from '../../utils/invoiceExport';
-import { toast } from 'react-hot-toast';
 
 const ReparationDetails: React.FC = () => {
   const { id = '' } = useParams();
@@ -38,29 +36,6 @@ const ReparationDetails: React.FC = () => {
       console.error('Failed to update status:', error);
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const handleExportInvoice = async (format: 'html' | 'pdf') => {
-    if (!reparation) return;
-
-    try {
-      await exportInvoice(reparation, { format });
-      toast.success(`Facture exportée en ${format.toUpperCase()}`);
-    } catch (error) {
-      console.error('Failed to export invoice:', error);
-      toast.error('Erreur lors de l\'export de la facture');
-    }
-  };
-
-  const handlePreviewInvoice = () => {
-    if (!reparation) return;
-
-    try {
-      previewInvoice(reparation);
-    } catch (error) {
-      console.error('Failed to preview invoice:', error);
-      toast.error('Erreur lors de l\'aperçu de la facture');
     }
   };
 
@@ -150,7 +125,6 @@ const ReparationDetails: React.FC = () => {
     ? { make: '', model: '', year: '', licensePlate: '', owner: { name: '', email: '', phone: '' } }
     : reparation?.car;
 
-  
   // Get the reparation status from the reparation object
   // Handle case where status might be a number (HTTP status) by ensuring it's a string
   let reparationStatus = reparation?.status || 'pending';
@@ -168,6 +142,17 @@ const ReparationDetails: React.FC = () => {
       'cancelled': 'Annulé'
     };
     return labels[status] || status;
+  };
+
+  const handleDownloadInvoice = () => {
+    if (!reparation?._id) return;
+    const link = document.createElement('a');
+    link.href = `/api/reparations/${reparation._id}/invoice`;
+    link.setAttribute('download', '');
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -201,38 +186,15 @@ const ReparationDetails: React.FC = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           {getStatusButtons()}
-          
-          {/* Invoice Export Buttons */}
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              onClick={handlePreviewInvoice}
-              icon={<Eye size={16} />}
-              className="px-2 py-1 text-xs"
-              title="Aperçu facture"
-            >
-              Aperçu
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleExportInvoice('html')}
-              icon={<Download size={16} />}
-              className="px-2 py-1 text-xs"
-              title="Télécharger facture HTML"
-            >
-              HTML
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleExportInvoice('pdf')}
-              icon={<FileText size={16} />}
-              className="px-2 py-1 text-xs"
-              title="Imprimer facture PDF"
-            >
-              PDF
-            </Button>
-          </div>
-
+          <Button
+            variant="outline"
+            onClick={handleDownloadInvoice}
+            icon={<Download size={20} />}
+            className="flex-1 sm:flex-none"
+            title="Télécharger la facture PDF"
+          >
+            Facture
+          </Button>
           <Button
             variant="outline"
             onClick={() => navigate(`/reparations/edit/${reparation._id}`)}
