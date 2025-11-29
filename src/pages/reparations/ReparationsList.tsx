@@ -9,6 +9,7 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import { useCrud } from '../../hooks/useCrud';
+import { useAuth } from '../../context/AuthContext';
 import { formatCurrency } from '../../utils/formatters';
 
 const ReparationsList: React.FC = () => {
@@ -82,14 +83,11 @@ const ReparationsList: React.FC = () => {
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
   };
 
+  const { token } = useAuth(); // Get token from useAuth context
+
   const downloadInvoice = (id: string) => {
-    const a = document.createElement('a');
-    a.href = `/api/reparations/${id}/invoice`;
-    a.setAttribute('download', '');
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (!token) return;
+    reparationsApi.downloadInvoice(id, token);
   };
 
   const handleStatusChange = async (reparationId: string, newStatus: string) => {

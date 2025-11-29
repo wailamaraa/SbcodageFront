@@ -7,6 +7,7 @@ import Badge, { BadgeVariant } from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import { formatCurrency } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
 
 const ReparationDetails: React.FC = () => {
   const { id = '' } = useParams();
@@ -144,15 +145,10 @@ const ReparationDetails: React.FC = () => {
     return labels[status] || status;
   };
 
+  const { token } = useAuth();
   const handleDownloadInvoice = () => {
-    if (!reparation?._id) return;
-    const link = document.createElement('a');
-    link.href = `/api/reparations/${reparation._id}/invoice`;
-    link.setAttribute('download', '');
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (!reparation?._id || !token) return;
+    reparationsApi.downloadInvoice(reparation._id, token);
   };
 
   return (

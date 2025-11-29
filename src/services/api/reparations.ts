@@ -109,6 +109,26 @@ class ReparationsApiService extends BaseApiService<Reparation> {
       };
     }
   }
+
+  async downloadInvoice(id: string, token: string): Promise<void> {
+    const res = await this.api.get(`/reparations/${id}/invoice`, {
+      responseType: 'blob',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const blob = new Blob([res.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    let filename = `Facture-${id}.pdf`;
+    const dispo = res.headers['content-disposition'];
+    if (dispo) {
+      const m = dispo.match(/filename=\"?([^\";]+)\"?/i);
+      if (m && m[1]) filename = m[1];
+    }
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
 }
 
-export const reparationsApi = new ReparationsApiService(); 
+export const reparationsApi = new ReparationsApiService();
